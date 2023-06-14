@@ -21,9 +21,6 @@ export class Company extends BaseEntity {
   @Column('text')
   address: string;
 
-  @Column()
-  password: string;
-
   @CreateDateColumn()
   createdAt: Date;
 
