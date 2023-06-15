@@ -1,9 +1,16 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { companyConstants } from './company.constants';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { Company } from './entities/company.entity';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class CompanyService {
@@ -15,7 +22,9 @@ export class CompanyService {
   async companyRegistration(
     createCompanyDto: CreateCompanyDto,
   ): Promise<Company> {
+    const generatedID = uuidv4();
     const company = new Company();
+    company.id = generatedID;
     company.name = createCompanyDto.name;
     company.email = createCompanyDto.email;
     company.address = createCompanyDto.address;
@@ -23,19 +32,45 @@ export class CompanyService {
     return await company.save();
   }
 
-  findAll() {
-    return `This action returns all company`;
+  async findAll(): Promise<Company[]> {
+    return await this.companyRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} company`;
+  async findOne(id: string): Promise<Company> {
+    const options: any = { id };
+    const entity = await this.companyRepository.findOne({
+      where: options,
+    });
+
+    return entity;
   }
 
-  update(id: number, updateCompanyDto: UpdateCompanyDto) {
-    return `This action updates a #${id} company`;
+  async updateCompany(
+    id: string,
+    updateCompanyDto: UpdateCompanyDto,
+  ): Promise<Company> {
+    const options: any = { id };
+    const entity = await this.companyRepository.findOne({
+      where: options,
+    });
+
+    if (!entity) throw new NotFoundException('Company not found!');
+
+    entity.name = updateCompanyDto.name || entity.name;
+    entity.email = updateCompanyDto.email || entity.email;
+    entity.address = updateCompanyDto.address || entity.address;
+
+    return this.companyRepository.save(entity);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} company`;
+  async remove(id: string): Promise<Company> {
+    const options: any = { id };
+    const entity = await this.companyRepository.findOne({
+      where: options,
+    });
+
+    if (!entity) throw new NotFoundException('Company not found!');
+
+    return this.companyRepository.remove(entity);
   }
 }

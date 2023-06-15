@@ -9,7 +9,7 @@ import {
 
 @Entity()
 export class Company extends BaseEntity {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ unique: true })
