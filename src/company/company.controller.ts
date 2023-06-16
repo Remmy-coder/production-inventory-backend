@@ -10,16 +10,18 @@ import {
 } from '@nestjs/common';
 import { HttpStatus } from '@nestjs/common/enums';
 import { HttpException } from '@nestjs/common/exceptions';
+import { ApiTags } from '@nestjs/swagger/dist';
 import { SETTINGS } from 'app.utils';
 import { CompanyService } from './company.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 
+@ApiTags('company')
 @Controller('company')
 export class CompanyController {
   constructor(private readonly companyService: CompanyService) {}
 
-  @Post('register')
+  @Post()
   async create(
     @Body(SETTINGS.VALIDATION_PIPE) createCompanyDto: CreateCompanyDto,
   ) {
