@@ -27,6 +27,8 @@ export class CompanyService {
     company.id = generatedID;
     company.name = createCompanyDto.name;
     company.email = createCompanyDto.email;
+    company.country = createCompanyDto.country;
+    company.state = createCompanyDto.state;
     company.address = createCompanyDto.address;
 
     return await company.save();
@@ -58,6 +60,8 @@ export class CompanyService {
 
     entity.name = updateCompanyDto.name || entity.name;
     entity.email = updateCompanyDto.email || entity.email;
+    entity.country = updateCompanyDto.country || entity.country;
+    entity.state = updateCompanyDto.state || entity.state;
     entity.address = updateCompanyDto.address || entity.address;
 
     return this.companyRepository.save(entity);

@@ -7,23 +7,37 @@ export class UpdateCompanyDto extends PartialType(CreateCompanyDto) {
   id: string;
 
   @ApiProperty()
-  @IsNotEmpty()
   @IsString()
   name: string;
 
   @ApiProperty()
-  @IsNotEmpty()
   @IsEmail()
   email: string;
 
   @ApiProperty()
-  @IsNotEmpty()
+  @IsString()
+  country: string;
+
+  @ApiProperty()
+  @IsString()
+  state: string;
+
+  @ApiProperty()
   @IsString()
   address: string;
 
-  constructor(address: string, email: string, name: string, id?: string) {
+  constructor(
+    address: string,
+    state: string,
+    country: string,
+    email: string,
+    name: string,
+    id?: string,
+  ) {
     super();
     this.address = address;
+    this.state = state;
+    this.country = country;
     this.email = email;
     this.name = name;
     this.id = id;
