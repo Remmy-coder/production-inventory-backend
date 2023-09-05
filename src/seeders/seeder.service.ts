@@ -44,6 +44,7 @@ export class SeederService {
     } else if (currencies.length === 0) {
       await this.seedCurrencies();
     }
+
     // Add more seed methods for other entities if needed
   }
 }

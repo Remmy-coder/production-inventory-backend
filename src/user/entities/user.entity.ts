@@ -31,6 +31,15 @@ export class User extends BaseEntity {
   @Column()
   password: string;
 
+  @Column({ nullable: true })
+  otpSecret: string;
+
+  @Column({ nullable: true })
+  otpToken: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  otpGeneratedAt: Date;
+
   @ManyToOne(() => Company, (company) => company.user)
   company: Company;
 
