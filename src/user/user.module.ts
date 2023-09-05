@@ -5,6 +5,8 @@ import { DatabaseModule } from 'src/database/database.module';
 import { UserProviders } from './user.providers';
 import { CompanyService } from 'src/company/company.service';
 import { CompanyProviders } from 'src/company/company.providers';
+import { CurrenciesProviders } from 'src/currencies/currencies.providers';
+import { CurrenciesService } from 'src/currencies/currencies.service';
 
 @Module({
   imports: [DatabaseModule],
@@ -12,8 +14,10 @@ import { CompanyProviders } from 'src/company/company.providers';
   providers: [
     ...UserProviders,
     ...CompanyProviders,
+    ...CurrenciesProviders,
     UserService,
     CompanyService,
+    CurrenciesService,
   ],
 })
 export class UserModule {}

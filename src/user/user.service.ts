@@ -1,4 +1,9 @@
-import { ConflictException, Inject, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CompanyService } from 'src/company/company.service';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -6,6 +11,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { userConstants } from './user.constants';
 import { v4 as uuidv4 } from 'uuid';
+import { PaginationResponseDto } from 'src/utils/pagination/pagination-response.dto';
 
 @Injectable()
 export class UserService {
@@ -16,7 +22,7 @@ export class UserService {
   ) {}
 
   async userRegistration(createUserDto: CreateUserDto): Promise<User> {
-    const company = await this.companyService.findOne(createUserDto.companyId);
+    const company = await this.companyService.findById(createUserDto.companyId);
 
     if (!company) {
       throw new ConflictException('Company does not exists');
@@ -35,22 +41,94 @@ export class UserService {
   }
 
   async findAll(): Promise<User[]> {
-    return await this.userRepository.find();
+    return await this.userRepository.find({
+      relations: {
+        company: {
+          currency: true,
+        },
+      },
+    });
   }
 
-  async findOne(id: string): Promise<User> {
+  async paginatedUser(
+    page: number,
+    limit: number,
+  ): Promise<PaginationResponseDto<User>> {
+    const [data, totalCount] = await this.userRepository.findAndCount({
+      relations: {
+        company: {
+          currency: true,
+        },
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    const paginatedResponse: PaginationResponseDto<User> = {
+      data,
+      meta: {
+        totalCount,
+        totalPages,
+        currentPage: page,
+        pageSize: limit,
+      },
+    };
+
+    return paginatedResponse;
+  }
+
+  async findOne(id: string): Promise<Partial<User>> {
+    const options: any = { id };
+    const entity = await this.userRepository.findOne({
+      where: options,
+      relations: {
+        company: true,
+      },
+    });
+
+    const { password, ...result } = entity;
+    return result;
+  }
+
+  async findOneByEmail(email: string): Promise<User> {
+    const options: any = { email };
+    const entity = await this.userRepository.findOne({
+      where: options,
+      relations: {
+        company: true,
+      },
+    });
+
+    //const { password, ...result } = entity;
+    return entity;
+  }
+
+  async updateUser(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const options: any = { id };
     const entity = await this.userRepository.findOne({
       where: options,
     });
-    return entity;
+
+    if (!entity) throw new NotFoundException('User not found!');
+
+    entity.firstName = updateUserDto.firstName || entity.firstName;
+    entity.lastName = updateUserDto.lastName || entity.lastName;
+    entity.email = updateUserDto.email || entity.email;
+    entity.gender = updateUserDto.gender || entity.gender;
+
+    return this.userRepository.save(entity);
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
+  async remove(id: string): Promise<User> {
+    const options: any = { id };
+    const entity = await this.userRepository.findOne({
+      where: options,
+    });
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+    if (!entity) throw new NotFoundException('User not found!');
+
+    return this.userRepository.remove(entity);
   }
 }

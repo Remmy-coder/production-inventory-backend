@@ -2,7 +2,7 @@ import { DataSource } from 'typeorm';
 import { currenciesConstants } from './currencies.constants';
 import { Currencies } from './entities/currencies.entity';
 
-export const currenciesProviders = [
+export const CurrenciesProviders = [
   {
     provide: currenciesConstants.provide,
     useFactory: (dataSource: DataSource) =>
