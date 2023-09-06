@@ -28,4 +28,20 @@ export class CreateSupplierContactDto {
   @IsString()
   @IsNotEmpty()
   phoneNumber: string;
+
+  constructor(
+    firstName: string,
+    lastName: string,
+    email: string,
+    dialcode: string,
+    phoneNumber: string,
+    id?: string,
+  ) {
+    this.firstName = firstName;
+    this.lastName = lastName;
+    this.email = email;
+    this.dialcode = dialcode;
+    this.phoneNumber = phoneNumber;
+    this.id = id;
+  }
 }

@@ -32,7 +32,7 @@ export class Supplier extends BaseEntity {
   @Column({ nullable: true })
   website: string;
 
-  @OneToOne(() => SupplierContact)
+  @OneToOne(() => SupplierContact, { cascade: true })
   @JoinColumn()
   supplierContact: SupplierContact;
 
@@ -44,5 +44,4 @@ export class Supplier extends BaseEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
-  supplier: Promise<SupplierContact>;
 }
