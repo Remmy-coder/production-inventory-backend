@@ -44,4 +44,24 @@ export class CreateSupplierDto {
   @ValidateNested()
   @Type(() => CreateSupplierContactDto)
   supplierContact: CreateSupplierContactDto;
+
+  constructor(
+    companyId: string,
+    name: string,
+    country: string,
+    state: string,
+    address: string,
+    supplierContact: CreateSupplierContactDto,
+    website?: string,
+    id?: string,
+  ) {
+    this.companyId = companyId;
+    this.name = name;
+    this.country = country;
+    this.state = state;
+    this.address = address;
+    this.supplierContact = supplierContact;
+    this.website = website;
+    this.id = id;
+  }
 }

@@ -1,4 +1,9 @@
-import { ConflictException, Inject, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { AbstractService } from 'src/common/abstract/abstract.service';
@@ -17,7 +22,7 @@ export class SupplierService extends AbstractService<Supplier> {
     private supplierContactService: SupplierContactService,
     private companyService: CompanyService,
   ) {
-    super(supplierRepository);
+    super(supplierRepository, ['supplierContact', 'company']);
   }
 
   async supplierRegistration(
@@ -32,26 +37,42 @@ export class SupplierService extends AbstractService<Supplier> {
     }
 
     const contact = new SupplierContact();
-    contact.firstName = createSupplierDto.supplierContact.firstName;
-    contact.lastName = createSupplierDto.supplierContact.lastName;
-    contact.email = createSupplierDto.supplierContact.email;
-    contact.dialcode = createSupplierDto.supplierContact.dialcode;
-    contact.phoneNumber = createSupplierDto.supplierContact.phoneNumber;
-    contact.save();
-
-    // const contact:  = this.supplierContactService.create(
-    //   createSupplierDto.supplierContact,
-    // );
+    Object.assign(contact, createSupplierDto.supplierContact);
+    await contact.save();
 
     const supplier = new Supplier();
-    supplier.name = createSupplierDto.name;
-    supplier.country = createSupplierDto.country;
-    supplier.state = createSupplierDto.state;
-    supplier.address = createSupplierDto.address;
-    supplier.website = createSupplierDto.website;
+    Object.assign(supplier, createSupplierDto);
     supplier.supplierContact = contact;
     supplier.company = company;
 
-    return supplier.save();
+    return await supplier.save();
+  }
+
+  async updateSupplierContact(
+    id: string,
+    updateSupplierDto: UpdateSupplierDto,
+  ): Promise<SupplierContact> {
+    const option: any = { id };
+    const entity = await this.supplierRepository.findOne({
+      where: option,
+    });
+
+    const entity2 = await this.supplierContactService.findById(
+      updateSupplierDto.supplierContact.id,
+    );
+
+    if (!entity || !entity2) throw new NotFoundException('Supplier not found!');
+
+    entity2.firstName =
+      updateSupplierDto.supplierContact.firstName || entity2.firstName;
+    entity2.lastName =
+      updateSupplierDto.supplierContact.lastName || entity2.lastName;
+    entity2.email = updateSupplierDto.supplierContact.email || entity2.email;
+    entity2.dialcode =
+      updateSupplierDto.supplierContact.dialcode || entity2.dialcode;
+    entity2.phoneNumber =
+      updateSupplierDto.supplierContact.phoneNumber || entity2.phoneNumber;
+
+    return entity2.save();
   }
 }
