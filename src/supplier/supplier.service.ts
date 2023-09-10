@@ -22,7 +22,12 @@ export class SupplierService extends AbstractService<Supplier> {
     private supplierContactService: SupplierContactService,
     private companyService: CompanyService,
   ) {
-    super(supplierRepository, ['supplierContact', 'company']);
+    super(supplierRepository, [
+      'supplierContact',
+      'company',
+      'company.currency',
+      'rawMaterials',
+    ]);
   }
 
   async supplierRegistration(
@@ -73,6 +78,6 @@ export class SupplierService extends AbstractService<Supplier> {
     entity2.phoneNumber =
       updateSupplierDto.supplierContact.phoneNumber || entity2.phoneNumber;
 
-    return entity2.save();
+    return await entity2.save();
   }
 }

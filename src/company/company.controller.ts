@@ -84,7 +84,8 @@ export class CompanyController {
   @Patch(':id/addCurrency')
   async addCurrency(
     @Param('id') id: string,
-    @Body() addCurrencyCompanyDto: AddCurrencyCompanyDto,
+    @Body(SETTINGS.VALIDATION_PIPE)
+    addCurrencyCompanyDto: AddCurrencyCompanyDto,
   ) {
     return await this.companyService.addCurrency(id, addCurrencyCompanyDto);
   }
