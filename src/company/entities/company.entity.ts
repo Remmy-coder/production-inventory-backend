@@ -1,4 +1,6 @@
 import { Currencies } from 'src/currencies/entities/currencies.entity';
+import { PackagingMaterial } from 'src/packaging-material/entities/packaging-material.entity';
+import { RawMaterial } from 'src/raw-material/entities/raw-material.entity';
 import { Supplier } from 'src/supplier/entities/supplier.entity';
 import { User } from 'src/user/entities/user.entity';
 import {
@@ -33,15 +35,27 @@ export class Company extends BaseEntity {
   @Column('text')
   address: string;
 
-  @OneToMany(() => User, (user) => user.company)
+  @OneToMany(() => User, (user) => user.company, { cascade: true })
   user: User[];
 
   @OneToOne(() => Currencies)
   @JoinColumn()
   currency: Currencies;
 
-  @OneToMany(() => Supplier, (supplier) => supplier.company)
+  @OneToMany(() => Supplier, (supplier) => supplier.company, { cascade: true })
   supplier: Supplier[];
+
+  @OneToMany(() => RawMaterial, (rawMaterial) => rawMaterial.company, {
+    cascade: true,
+  })
+  rawMaterials: RawMaterial[];
+
+  @OneToMany(
+    () => PackagingMaterial,
+    (packagingMaterial) => packagingMaterial.company,
+    { cascade: true },
+  )
+  packagingMaterials: PackagingMaterial[];
 
   @CreateDateColumn()
   createdAt: Date;

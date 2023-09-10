@@ -12,6 +12,7 @@ import { AuthLoginDto } from './dto/auth.login.dto';
 import { Public } from './decorators/public.decorator';
 import { ApiTags } from '@nestjs/swagger';
 import { JwtService } from '@nestjs/jwt';
+import { SETTINGS } from 'app.utils';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -24,8 +25,8 @@ export class AuthController {
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  async signIn(@Body() signInDto: AuthLoginDto) {
-    return this.authService.signIn(signInDto);
+  async signIn(@Body(SETTINGS.VALIDATION_PIPE) signInDto: AuthLoginDto) {
+    return await this.authService.signIn(signInDto);
   }
 
   @Public()
@@ -34,7 +35,11 @@ export class AuthController {
     const { userData, otpRes } = await this.authService.verifyOtp(userId, otp);
 
     if (otpRes) {
-      const payload = { sub: userData.id, username: userData.email };
+      const payload = {
+        sub: userData.id,
+        username: userData.email,
+        companyId: userData.company.id,
+      };
       return {
         accessToken: await this.jwtService.signAsync(payload),
         userData: userData,

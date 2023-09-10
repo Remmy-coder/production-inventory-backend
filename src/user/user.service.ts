@@ -12,14 +12,17 @@ import { User } from './entities/user.entity';
 import { userConstants } from './user.constants';
 import { v4 as uuidv4 } from 'uuid';
 import { PaginationResponseDto } from 'src/utils/pagination/pagination-response.dto';
+import { AbstractService } from 'src/common/abstract/abstract.service';
 
 @Injectable()
-export class UserService {
+export class UserService extends AbstractService<User> {
   constructor(
     @Inject(userConstants.provide)
     private userRepository: Repository<User>,
     private readonly companyService: CompanyService,
-  ) {}
+  ) {
+    super(userRepository, ['company', 'company.currency']);
+  }
 
   async userRegistration(createUserDto: CreateUserDto): Promise<User> {
     const company = await this.companyService.findById(createUserDto.companyId);

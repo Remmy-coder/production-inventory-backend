@@ -11,6 +11,7 @@ import {
   HttpStatus,
   UseGuards,
   Query,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,6 +20,7 @@ import { SETTINGS } from 'app.utils';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
 
 @ApiTags('user')
 @Controller('user')
@@ -45,20 +47,23 @@ export class UserController {
     }
   }
 
-  @Get('')
+  @Get()
   async paginatedUser(
     @Query('page') page: number,
     @Query('limit') limit: number,
+    @Req() req: Request,
   ) {
     page = page || 1; // Default to page 1
     limit = limit || 10; // Default to 10 items per page
+    const companyId = req['user'].companyId;
 
-    return this.userService.paginatedUser(page, limit);
+    return this.userService.paginatedByCompany(page, limit, companyId);
   }
 
   @Get('All')
-  async findAll() {
-    return this.userService.findAll();
+  async findAll(@Req() req: Request) {
+    const companyId = req['user'].companyId;
+    return this.userService.findAllByCompany(companyId);
   }
 
   @Get(':id')
