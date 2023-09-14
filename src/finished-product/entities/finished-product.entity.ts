@@ -1,11 +1,13 @@
 import { Company } from 'src/company/entities/company.entity';
-import { FinishedProduct } from 'src/finished-product/entities/finished-product.entity';
-import { Supplier } from 'src/supplier/entities/supplier.entity';
+import { PackagingMaterial } from 'src/packaging-material/entities/packaging-material.entity';
+import { RawMaterial } from 'src/raw-material/entities/raw-material.entity';
 import {
   BaseEntity,
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
   Unique,
@@ -14,7 +16,7 @@ import {
 
 @Entity()
 @Unique(['name', 'barcode', 'company'])
-export class RawMaterial extends BaseEntity {
+export class FinishedProduct extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -28,7 +30,7 @@ export class RawMaterial extends BaseEntity {
   sku: string;
 
   @Column('int')
-  quantity: number;
+  expectedQuantity: number;
 
   @Column()
   unit: string;
@@ -36,14 +38,16 @@ export class RawMaterial extends BaseEntity {
   @Column('int')
   basePrice: number;
 
-  @Column('int')
-  reserve: number;
-
-  @ManyToOne(() => Company, (company) => company.rawMaterials)
+  @ManyToOne(() => Company, (company) => company.finishedProducts)
   company: Company;
 
-  @ManyToOne(() => Supplier, (supplier) => supplier.rawMaterials)
-  supplier: Supplier;
+  @ManyToMany(() => RawMaterial)
+  @JoinTable()
+  rawMaterials: RawMaterial[];
+
+  @ManyToMany(() => PackagingMaterial)
+  @JoinTable()
+  packagingMaterials: PackagingMaterial[];
 
   @CreateDateColumn()
   createdAt: Date;

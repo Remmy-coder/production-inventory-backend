@@ -1,4 +1,5 @@
 import { Currencies } from 'src/currencies/entities/currencies.entity';
+import { FinishedProduct } from 'src/finished-product/entities/finished-product.entity';
 import { PackagingMaterial } from 'src/packaging-material/entities/packaging-material.entity';
 import { RawMaterial } from 'src/raw-material/entities/raw-material.entity';
 import { Supplier } from 'src/supplier/entities/supplier.entity';
@@ -56,6 +57,13 @@ export class Company extends BaseEntity {
     { cascade: true },
   )
   packagingMaterials: PackagingMaterial[];
+
+  @OneToMany(
+    () => FinishedProduct,
+    (finishedProduct) => finishedProduct.company,
+    { cascade: true },
+  )
+  finishedProducts: FinishedProduct[];
 
   @CreateDateColumn()
   createdAt: Date;

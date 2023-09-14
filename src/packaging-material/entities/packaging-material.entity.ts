@@ -1,4 +1,5 @@
 import { Company } from 'src/company/entities/company.entity';
+import { FinishedProduct } from 'src/finished-product/entities/finished-product.entity';
 import { Supplier } from 'src/supplier/entities/supplier.entity';
 import {
   BaseEntity,
@@ -7,18 +8,20 @@ import {
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 
 @Entity()
+@Unique(['name', 'barcode', 'company'])
 export class PackagingMaterial extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column()
   name: string;
 
-  @Column({ unique: true })
+  @Column()
   barcode: string;
 
   @Column()
