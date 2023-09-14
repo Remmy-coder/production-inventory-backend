@@ -76,10 +76,7 @@ export class PackagingMaterialController {
     @Param('id') id: string,
     @Body() updatePackagingMaterialDto: UpdatePackagingMaterialDto,
   ) {
-    return this.packagingMaterialService.updatePackagingMaterial(
-      id,
-      updatePackagingMaterialDto,
-    );
+    return this.packagingMaterialService.update(id, updatePackagingMaterialDto);
   }
 
   @Delete(':id')

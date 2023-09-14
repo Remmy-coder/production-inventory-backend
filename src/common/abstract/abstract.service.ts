@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PaginationResponseDto } from 'src/utils/pagination/pagination-response.dto';
 import {
+  BaseEntity,
   DeepPartial,
+  EntityTarget,
   FindManyOptions,
   FindOneOptions,
   FindOptionsWhere,
@@ -38,8 +40,17 @@ export abstract class AbstractService<T> {
   //   }
   // }
 
-  async create(entity: DeepPartial<T>): Promise<T> {
-    return this.repository.save(entity);
+  // async create(entity: DeepPartial<T>): Promise<T> {
+  //   return this.repository.save(entity);
+  // }
+
+  async create<D>(
+    dto: D,
+    entity: new () => T, // Change the parameter type to accept the entity class constructor.
+    additionalParams?: (dto: D) => DeepPartial<T>,
+  ): Promise<T> {
+    const newEntity = Object.assign(new entity(), dto, additionalParams(dto));
+    return await this.repository.save(newEntity);
   }
 
   async findAll(): Promise<T[]> {
@@ -70,9 +81,29 @@ export abstract class AbstractService<T> {
     return entity;
   }
 
-  async update(id: string, entity: DeepPartial<T>): Promise<T> {
-    const foundEntity = await this.findById(id);
-    return this.repository.save({ ...foundEntity, ...entity });
+  async update<D>(
+    id: string,
+    updateDto: D,
+    //entityClass: EntityTarget<T>,
+    //relations?: string[],
+  ): Promise<T> {
+    const options: any = { id };
+    const entity = await this.repository.findOne({
+      where: options,
+      relations: this.relations,
+    });
+
+    if (!entity) {
+      throw new NotFoundException(`Entity not found!`);
+    }
+
+    for (const key of Object.keys(updateDto)) {
+      if (updateDto[key] !== undefined) {
+        entity[key] = updateDto[key];
+      }
+    }
+
+    return await this.repository.save(entity);
   }
 
   async remove(id: string): Promise<T> {

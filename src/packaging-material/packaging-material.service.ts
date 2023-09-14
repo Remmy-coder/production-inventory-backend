@@ -46,12 +46,19 @@ export class PackagingMaterialService extends AbstractService<PackagingMaterial>
       throw new ConflictException('Company does not exists');
     }
 
-    const packagingMaterial = new PackagingMaterial();
-    Object.assign(packagingMaterial, createPackagingMaterialDto);
-    packagingMaterial.company = company;
-    packagingMaterial.supplier = supplier;
+    // const packagingMaterial = new PackagingMaterial();
+    // Object.assign(packagingMaterial, createPackagingMaterialDto);
+    // packagingMaterial.company = company;
+    // packagingMaterial.supplier = supplier;
 
-    return await packagingMaterial.save();
+    return this.create(
+      createPackagingMaterialDto,
+      PackagingMaterial, // Provide the entity class constructor.
+      (dto) => ({
+        company,
+        supplier,
+      }),
+    );
   }
 
   async updatePackagingMaterial(

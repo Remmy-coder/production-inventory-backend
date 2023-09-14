@@ -93,7 +93,7 @@ export class RawMaterialController {
     @Param('id') id: string,
     @Body() updateRawMaterialDto: UpdateRawMaterialDto,
   ) {
-    return this.rawMaterialService.updateRawMaterial(id, updateRawMaterialDto);
+    return this.rawMaterialService.update(id, updateRawMaterialDto);
   }
 
   @Delete(':id')

@@ -30,17 +30,23 @@ export class UserService extends AbstractService<User> {
     if (!company) {
       throw new ConflictException('Company does not exists');
     }
-    const generatedID = uuidv4();
-    const user = new User();
-    user.id = generatedID;
-    user.firstName = createUserDto.firstName;
-    user.lastName = createUserDto.lastName;
-    user.email = createUserDto.email;
-    user.gender = createUserDto.gender;
-    user.password = createUserDto.password;
-    user.company = company;
+    // const generatedID = uuidv4();
+    // const user = new User();
+    // user.id = generatedID;
+    // user.firstName = createUserDto.firstName;
+    // user.lastName = createUserDto.lastName;
+    // user.email = createUserDto.email;
+    // user.gender = createUserDto.gender;
+    // user.password = createUserDto.password;
+    // user.company = company;
 
-    return user.save();
+    return this.create(
+      createUserDto,
+      User, // Provide the entity class constructor.
+      (dto) => ({
+        company,
+      }),
+    );
   }
 
   async findAll(): Promise<User[]> {
