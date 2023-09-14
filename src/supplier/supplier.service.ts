@@ -42,15 +42,18 @@ export class SupplierService extends AbstractService<Supplier> {
     }
 
     const contact = new SupplierContact();
-    Object.assign(contact, createSupplierDto.supplierContact);
-    await contact.save();
+    //Object.assign(contact, createSupplierDto.supplierContact);
+    // await contact.save();
 
-    const supplier = new Supplier();
-    Object.assign(supplier, createSupplierDto);
-    supplier.supplierContact = contact;
-    supplier.company = company;
+    //const supplier = new Supplier();
+    // Object.assign(supplier, createSupplierDto);
+    // supplier.supplierContact = contact;
+    // supplier.company = company;
 
-    return await supplier.save();
+    return this.create(createSupplierDto, Supplier, (dto) => ({
+      company,
+      contact,
+    }));
   }
 
   async updateSupplierContact(

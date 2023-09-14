@@ -5,6 +5,7 @@ import {
   Entity,
   OneToOne,
   PrimaryGeneratedColumn,
+  Unique,
 } from 'typeorm';
 
 @Entity()
@@ -18,7 +19,7 @@ export class SupplierContact extends BaseEntity {
   @Column()
   lastName: string;
 
-  @Column({ unique: true })
+  @Column()
   email: string;
 
   @Column()

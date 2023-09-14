@@ -18,8 +18,8 @@ import { SETTINGS } from 'app.utils';
 import { ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 
-@ApiTags('raw-material')
-@Controller('raw-material')
+@ApiTags('rawMaterial')
+@Controller('rawMaterial')
 export class RawMaterialController {
   constructor(private readonly rawMaterialService: RawMaterialService) {}
 
@@ -96,8 +96,8 @@ export class RawMaterialController {
     return this.rawMaterialService.update(id, updateRawMaterialDto);
   }
 
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.rawMaterialService.remove(+id);
-  // }
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.rawMaterialService.remove(id);
+  }
 }

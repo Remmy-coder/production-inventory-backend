@@ -48,12 +48,21 @@ export class RawMaterialService extends AbstractService<RawMaterial> {
       throw new ConflictException('Company does not exists');
     }
 
-    const rawMaterial = new RawMaterial();
-    Object.assign(rawMaterial, createRawMaterialDto);
-    rawMaterial.company = company;
-    rawMaterial.supplier = supplier;
+    // const rawMaterial = new RawMaterial();
+    // Object.assign(rawMaterial, createRawMaterialDto);
+    // rawMaterial.company = company;
+    // rawMaterial.supplier = supplier;
 
-    return await rawMaterial.save();
+    // return await rawMaterial.save();
+
+    return this.create(
+      createRawMaterialDto,
+      RawMaterial, // Provide the entity class constructor.
+      (dto) => ({
+        company,
+        supplier,
+      }),
+    );
   }
 
   async updateRawMaterial(

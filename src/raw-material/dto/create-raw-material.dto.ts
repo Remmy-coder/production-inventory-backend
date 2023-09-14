@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
-import { runInThisContext } from 'vm';
 
 export class CreateRawMaterialDto {
   id: string;

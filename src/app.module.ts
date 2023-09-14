@@ -15,6 +15,7 @@ import { RawMaterialModule } from './raw-material/raw-material.module';
 import { PackagingMaterialModule } from './packaging-material/packaging-material.module';
 import { APP_FILTER } from '@nestjs/core';
 import { HttpExceptionFilter } from './utils/exceptionFilters/http-exception.filter';
+import { FinishedProductModule } from './finished-product/finished-product.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { HttpExceptionFilter } from './utils/exceptionFilters/http-exception.fil
     SupplierContactModule,
     RawMaterialModule,
     PackagingMaterialModule,
+    FinishedProductModule,
   ],
   controllers: [AppController],
   providers: [
