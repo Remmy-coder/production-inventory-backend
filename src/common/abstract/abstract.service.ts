@@ -7,6 +7,7 @@ import {
   FindManyOptions,
   FindOneOptions,
   FindOptionsWhere,
+  In,
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
@@ -75,6 +76,24 @@ export abstract class AbstractService<T> {
       relations: this.relations,
     };
     const entity = await this.repository.findOne(findOptions);
+    if (!entity) {
+      throw new NotFoundException('Entity not found');
+    }
+    return entity;
+  }
+
+  async findManyByIds(ids: string[], companyId: string): Promise<T[]> {
+    //const options: any = { id };
+    const findOptions: FindOneOptions<T> = {
+      where: {
+        id: In(ids),
+        company: {
+          id: companyId,
+        },
+      } as unknown as FindOptionsWhere<T> | FindOptionsWhere<T>[],
+      relations: this.relations,
+    };
+    const entity = await this.repository.find(findOptions);
     if (!entity) {
       throw new NotFoundException('Entity not found');
     }
