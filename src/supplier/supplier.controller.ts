@@ -23,7 +23,6 @@ import { Request } from 'express';
 export class SupplierController {
   constructor(private readonly supplierService: SupplierService) {}
 
-  @Public()
   @Post()
   async create(
     @Body(SETTINGS.VALIDATION_PIPE) createSupplierDto: CreateSupplierDto,
@@ -41,7 +40,7 @@ export class SupplierController {
   }
 
   @Get()
-  async paginatedUser(
+  async paginatedData(
     @Query('page') page: number,
     @Query('limit') limit: number,
     @Req() req: Request,

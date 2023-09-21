@@ -16,6 +16,8 @@ import { PackagingMaterialModule } from './packaging-material/packaging-material
 import { APP_FILTER } from '@nestjs/core';
 import { HttpExceptionFilter } from './utils/exceptionFilters/http-exception.filter';
 import { FinishedProductModule } from './finished-product/finished-product.module';
+import { FinishedProductRawMaterialModule } from './finished-product-raw-material/finished-product-raw-material.module';
+import { FinishedProductPackagingMaterialModule } from './finished-product-packaging-material/finished-product-packaging-material.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { FinishedProductModule } from './finished-product/finished-product.modul
     RawMaterialModule,
     PackagingMaterialModule,
     FinishedProductModule,
+    FinishedProductRawMaterialModule,
+    FinishedProductPackagingMaterialModule,
   ],
   controllers: [AppController],
   providers: [

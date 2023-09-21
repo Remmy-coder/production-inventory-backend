@@ -46,7 +46,7 @@ export class CompanyController {
   }
 
   @Get()
-  async paginatedUser(
+  async paginatedData(
     @Query('page') page: number,
     @Query('limit') limit: number,
   ) {
