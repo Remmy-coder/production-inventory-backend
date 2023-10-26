@@ -17,6 +17,8 @@ import { Public } from 'src/auth/decorators/public.decorator';
 import { SETTINGS } from 'app.utils';
 import { ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
+import { RawMaterialApprovalStatusDto } from './dto/raw-material-approval-status.dto';
+import { MaterialApprovalStatus } from 'src/utils/enums/material-approval-status.enum';
 
 @ApiTags('rawMaterial')
 @Controller('rawMaterial')
@@ -57,6 +59,7 @@ export class RawMaterialController {
           'Duplicate entry. Please provide unique values.',
         );
       }
+      console.log(error);
     }
   }
 
@@ -89,15 +92,50 @@ export class RawMaterialController {
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param('id') id: string,
-    @Body() updateRawMaterialDto: UpdateRawMaterialDto,
+    @Body(SETTINGS.VALIDATION_PIPE) updateRawMaterialDto: UpdateRawMaterialDto,
   ) {
-    return this.rawMaterialService.update(id, updateRawMaterialDto);
+    return await this.rawMaterialService.update(id, updateRawMaterialDto);
+  }
+
+  @Patch(':id/approvalStatus')
+  async rawMaterialApprovalStatus(
+    @Param('id') id: string,
+    @Body(SETTINGS.VALIDATION_PIPE)
+    materialApprovalStatusDto: RawMaterialApprovalStatusDto,
+  ) {
+    try {
+      return await this.rawMaterialService.rawMaterialApprovalStatus(
+        id,
+        materialApprovalStatusDto,
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  @Get(':approvalStatus/approvalStatus')
+  async filterByApprovalStatus(
+    @Param('approvalStatus') approvalStatus: MaterialApprovalStatus,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Req() req: Request,
+  ) {
+    page = page || 1; // Default to page 1
+    limit = limit || 10; // Default to 10 items per page
+    const companyId = req['user'].companyId;
+
+    return await this.rawMaterialService.findByApprovalStatus(
+      approvalStatus,
+      page,
+      limit,
+      companyId,
+    );
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.rawMaterialService.remove(id);
+  async remove(@Param('id') id: string) {
+    return await this.rawMaterialService.remove(id);
   }
 }

@@ -1,19 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common';
-import dataSource from 'db/data-source';
+import { ConfigService } from '@nestjs/config';
 import { currenciesConstants } from 'src/currencies/currencies.constants';
 import { currenciesSeed } from 'src/currencies/currencies.seed';
 import { Currencies } from 'src/currencies/entities/currencies.entity';
-import { Repository } from 'typeorm';
+import { databaseConstants } from 'src/database/database.constants';
+import { DataSource, Repository } from 'typeorm';
 
 @Injectable()
 export class SeederService {
   constructor(
     @Inject(currenciesConstants.provide)
     private readonly currenciesRepository: Repository<Currencies>,
+    @Inject(databaseConstants.ds) private readonly dataSource: DataSource,
   ) {}
 
   async seedCurrencies() {
-    const queryRunner = dataSource.createQueryRunner();
+    const queryRunner = this.dataSource.createQueryRunner();
 
     await queryRunner.connect();
     await queryRunner.startTransaction();

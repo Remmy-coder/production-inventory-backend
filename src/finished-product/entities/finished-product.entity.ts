@@ -3,6 +3,7 @@ import { FinishedProductPackagingMaterial } from 'src/finished-product-packaging
 import { FinishedProductRawMaterial } from 'src/finished-product-raw-material/entities/finished-product-raw-material.entity';
 import { PackagingMaterial } from 'src/packaging-material/entities/packaging-material.entity';
 import { RawMaterial } from 'src/raw-material/entities/raw-material.entity';
+import { MaterialApprovalStatus } from 'src/utils/enums/material-approval-status.enum';
 import {
   BaseEntity,
   Column,
@@ -56,6 +57,18 @@ export class FinishedProduct extends BaseEntity {
       finishedProductPackagingMaterial.finishedProduct,
   )
   finishedProductPackagingMaterial: FinishedProductPackagingMaterial[];
+
+  @Column({
+    enum: MaterialApprovalStatus,
+    default: MaterialApprovalStatus.PENDING,
+  })
+  approvalStatus: MaterialApprovalStatus;
+
+  @Column({ type: 'timestamp', nullable: true })
+  approvalDate: Date;
+
+  @Column({ nullable: true, length: 100 })
+  reasonForDisapproval: string;
 
   @CreateDateColumn()
   createdAt: Date;
