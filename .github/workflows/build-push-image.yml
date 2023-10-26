@@ -28,9 +28,10 @@ jobs:
       - name: Build the Nest.js app
         run: npm run build
 
+      - name: Build and Push Image to Docker Hub
         uses: mr-smithers-excellent/docker-build-push@v6
         with:
-          image: pms-repository/pms-backend-image
+          image: remmyomeje/pms-repository
           registry: docker.io
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
