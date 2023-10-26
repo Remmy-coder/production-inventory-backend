@@ -12,8 +12,9 @@ import { UpdateCompanyDto } from './dto/update-company.dto';
 import { Company } from './entities/company.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { CurrenciesService } from 'src/currencies/currencies.service';
-import { AddCurrencyCompanyDto } from './dto/addCurrency-company.dto';
+import { SetCompanyCurrencyDto } from './dto/set-company-currency.dto';
 import { AbstractService } from 'src/common/abstract/abstract.service';
+import { CompanyActivationStatus } from 'src/utils/enums/company-activation-status.enum';
 
 @Injectable()
 export class CompanyService extends AbstractService<Company> {
@@ -82,7 +83,7 @@ export class CompanyService extends AbstractService<Company> {
 
   async addCurrency(
     id: string,
-    addCurrencyCompanyDto: AddCurrencyCompanyDto,
+    addCurrencyCompanyDto: SetCompanyCurrencyDto,
   ): Promise<Company> {
     const companyId: any = { id };
 
@@ -112,5 +113,19 @@ export class CompanyService extends AbstractService<Company> {
     if (!entity) throw new NotFoundException('Company not found!');
 
     return this.companyRepository.remove(entity);
+  }
+
+  async activateCompany(id: string): Promise<Company> {
+    const company = await this.companyRepository.findOne({
+      where: { id: id },
+    });
+
+    if (!company) {
+      throw new NotFoundException('Company not found');
+    }
+    company.activationStatus = CompanyActivationStatus.ACTIVATED;
+    company.activationDate = new Date();
+
+    return this.companyRepository.save(company);
   }
 }

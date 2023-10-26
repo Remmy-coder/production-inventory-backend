@@ -9,9 +9,13 @@ import { UpdatePackagingMaterialDto } from './dto/update-packaging-material.dto'
 import { AbstractService } from 'src/common/abstract/abstract.service';
 import { PackagingMaterial } from './entities/packaging-material.entity';
 import { packagingMaterialConstants } from './packaging-material.constants';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { CompanyService } from 'src/company/company.service';
 import { SupplierService } from 'src/supplier/supplier.service';
+import { RawMaterialApprovalStatusDto } from 'src/raw-material/dto/raw-material-approval-status.dto';
+import { MaterialApprovalStatus } from 'src/utils/enums/material-approval-status.enum';
+import { PaginationResponseDto } from 'src/utils/pagination/pagination-response.dto';
+import { PackagingMaterialApprovalStatusDto } from './dto/packaging-material-approval-status.dto';
 
 @Injectable()
 export class PackagingMaterialService extends AbstractService<PackagingMaterial> {
@@ -91,5 +95,90 @@ export class PackagingMaterialService extends AbstractService<PackagingMaterial>
     entity.supplier = supplier || entity.supplier;
 
     return await entity.save();
+  }
+
+  async packagingMaterialApprovalStatus(
+    id: string,
+    materialApprovalStatusDto: PackagingMaterialApprovalStatusDto,
+  ): Promise<PackagingMaterial> {
+    const options: any = { id };
+    const entity = await this.packagingMaterialRepository.findOne({
+      where: options,
+    });
+
+    if (!entity) throw new NotFoundException('Raw material not found!');
+
+    if (
+      materialApprovalStatusDto.approvalStatus ==
+      MaterialApprovalStatus.APPROVED
+    ) {
+      entity.approvalStatus = MaterialApprovalStatus.APPROVED;
+      entity.approvalDate = new Date();
+    }
+
+    if (
+      materialApprovalStatusDto.approvalStatus ==
+      MaterialApprovalStatus.DISAPPROVED
+    ) {
+      this.handleDisapproval(materialApprovalStatusDto, entity);
+    }
+
+    return await entity.save();
+  }
+
+  async handleDisapproval(
+    materialApprovalStatusDto: PackagingMaterialApprovalStatusDto,
+    entity: PackagingMaterial,
+  ): Promise<void> {
+    if (materialApprovalStatusDto.reasonForDisapproval != undefined) {
+      entity.approvalStatus = MaterialApprovalStatus.DISAPPROVED;
+      entity.approvalDate = new Date();
+      entity.reasonForDisapproval =
+        materialApprovalStatusDto.reasonForDisapproval;
+    } else {
+      throw new ConflictException(
+        'Reason for disapproval is required when a material is marked as disapproved.',
+      );
+    }
+  }
+
+  async findByApprovalStatus(
+    approvalStatus: MaterialApprovalStatus,
+    page: number,
+    limit: number,
+    companyId: string,
+  ): Promise<PaginationResponseDto<PackagingMaterial>> {
+    const [data, totalCount] =
+      await this.packagingMaterialRepository.findAndCount({
+        where: {
+          approvalStatus: approvalStatus,
+          company: {
+            id: companyId,
+          },
+        } as unknown as
+          | FindOptionsWhere<PackagingMaterial>
+          | FindOptionsWhere<PackagingMaterial>[],
+        relations: [
+          'supplier',
+          'company',
+          'supplier.supplierContact',
+          'company.currency',
+        ],
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+    const totalPages = Math.ceil(totalCount / limit);
+
+    const paginatedResponse: PaginationResponseDto<PackagingMaterial> = {
+      data,
+      meta: {
+        totalCount,
+        totalPages,
+        currentPage: page,
+        pageSize: limit,
+      },
+    };
+
+    return paginatedResponse;
   }
 }

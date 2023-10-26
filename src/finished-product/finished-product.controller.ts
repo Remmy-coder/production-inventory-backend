@@ -17,6 +17,8 @@ import { Public } from 'src/auth/decorators/public.decorator';
 import { ApiTags } from '@nestjs/swagger';
 import { SETTINGS } from 'app.utils';
 import { Request } from 'express';
+import { FinishedProductApprovalStatusDto } from './dto/finished-product-approval-status.dto';
+import { MaterialApprovalStatus } from 'src/utils/enums/material-approval-status.enum';
 
 @ApiTags('finishedProduct')
 @Controller('finishedProduct')
@@ -73,6 +75,40 @@ export class FinishedProductController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.finishedProductService.findById(id);
+  }
+
+  @Patch(':id/approvalStatus')
+  async finishedProductApprovalStatus(
+    @Param('id') id: string,
+    @Body(SETTINGS.VALIDATION_PIPE)
+    productApprovalStatus: FinishedProductApprovalStatusDto,
+  ) {
+    try {
+      return await this.finishedProductService.finishedProductApprovalStatus(
+        id,
+        productApprovalStatus,
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  @Get(':approvalStatus')
+  async filterByApprovalStatus(
+    @Param('approvalStatus') approvalStatus: MaterialApprovalStatus,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Req() req: Request,
+  ) {
+    page = page || 1; // Default to page 1
+    limit = limit || 10; // Default to 10 items per page
+    const companyId = req['user'].companyId;
+    return await this.finishedProductService.findByApprovalStatus(
+      approvalStatus,
+      page,
+      limit,
+      companyId,
+    );
   }
 
   // @Patch(':id')

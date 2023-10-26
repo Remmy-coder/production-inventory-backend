@@ -16,6 +16,8 @@ import { UpdatePackagingMaterialDto } from './dto/update-packaging-material.dto'
 import { ApiTags } from '@nestjs/swagger';
 import { SETTINGS } from 'app.utils';
 import { Request } from 'express';
+import { PackagingMaterialApprovalStatusDto } from './dto/packaging-material-approval-status.dto';
+import { MaterialApprovalStatus } from 'src/utils/enums/material-approval-status.enum';
 
 @ApiTags('packagingMaterial')
 @Controller('packagingMaterial')
@@ -72,15 +74,53 @@ export class PackagingMaterialController {
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param('id') id: string,
-    @Body() updatePackagingMaterialDto: UpdatePackagingMaterialDto,
+    @Body(SETTINGS.VALIDATION_PIPE)
+    updatePackagingMaterialDto: UpdatePackagingMaterialDto,
   ) {
-    return this.packagingMaterialService.update(id, updatePackagingMaterialDto);
+    return await this.packagingMaterialService.update(
+      id,
+      updatePackagingMaterialDto,
+    );
+  }
+
+  @Patch(':id/approvalStatus')
+  async rawMaterialApprovalStatus(
+    @Param('id') id: string,
+    @Body(SETTINGS.VALIDATION_PIPE)
+    materialApprovalStatusDto: PackagingMaterialApprovalStatusDto,
+  ) {
+    try {
+      return await this.packagingMaterialService.packagingMaterialApprovalStatus(
+        id,
+        materialApprovalStatusDto,
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  @Get(':approvalStatus/approvalStatus')
+  async filterByApprovalStatus(
+    @Param('approvalStatus') approvalStatus: MaterialApprovalStatus,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+    @Req() req: Request,
+  ) {
+    page = page || 1; // Default to page 1
+    limit = limit || 10; // Default to 10 items per page
+    const companyId = req['user'].companyId;
+    return await this.packagingMaterialService.findByApprovalStatus(
+      approvalStatus,
+      page,
+      limit,
+      companyId,
+    );
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.packagingMaterialService.remove(id);
+  async remove(@Param('id') id: string) {
+    return await this.packagingMaterialService.remove(id);
   }
 }
