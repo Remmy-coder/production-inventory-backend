@@ -1,4 +1,9 @@
-import { Injectable, Inject, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateFinishedProductDto } from './dto/create-finished-product.dto';
 import { UpdateFinishedProductDto } from './dto/update-finished-product.dto';
 import { AbstractService } from 'src/common/abstract/abstract.service';
@@ -15,6 +20,9 @@ import { CompanyService } from 'src/company/company.service';
 import { RawMaterial } from 'src/raw-material/entities/raw-material.entity';
 import { Company } from 'src/company/entities/company.entity';
 import { PackagingMaterial } from 'src/packaging-material/entities/packaging-material.entity';
+import { MaterialApprovalStatus } from 'src/utils/enums/material-approval-status.enum';
+import { FinishedProductApprovalStatusDto } from './dto/finished-product-approval-status.dto';
+import { PaginationResponseDto } from 'src/utils/pagination/pagination-response.dto';
 
 @Injectable()
 export class FinishedProductService extends AbstractService<FinishedProduct> {
@@ -57,8 +65,6 @@ export class FinishedProductService extends AbstractService<FinishedProduct> {
     const finishedProduct = new FinishedProduct();
     Object.assign(finishedProduct, createFinishedProductDto);
     finishedProduct.company = company;
-    //await finishedProduct.save();
-    //this.finishedProductRepository.create(finishedProduct);
 
     const rawMaterialDummy: FinishedProductRawMaterial[] = [];
 
@@ -73,19 +79,7 @@ export class FinishedProductService extends AbstractService<FinishedProduct> {
         throw new ConflictException('Raw material does not exist');
       }
 
-      if (rawMaterial.quantity - usedQuantity <= rawMaterial.reserve) {
-        throw new ConflictException(
-          'Raw material quantity is less or equal to the reorder level. Kindly Restock and try again',
-        );
-      }
-
-      this.debitItem(rawMaterial, usedQuantity);
-
-      // rawMaterial.quantity -= usedQuantity;
-      // await rawMaterial.save();
-
       const finishedProductRawMaterial = new FinishedProductRawMaterial();
-      //finishedProductRawMaterial.finishedProduct = finishedProduct;
       finishedProductRawMaterial.rawMaterial = rawMaterial;
       finishedProductRawMaterial.usedQuantity = usedQuantity;
 
@@ -104,23 +98,19 @@ export class FinishedProductService extends AbstractService<FinishedProduct> {
         throw new ConflictException('Packaging material does not exist');
       }
 
-      if (
-        packagingMaterial.quantity - usedQuantity <=
-        packagingMaterial.reserve
-      ) {
-        throw new ConflictException(
-          'Packaging material quantity is less or equal to the reorder level. Kindly Restock and try again',
-        );
-      }
-
-      this.debitItem(packagingMaterial, usedQuantity);
+      // if (
+      //   packagingMaterial.quantity - usedQuantity <=
+      //   packagingMaterial.reserve
+      // ) {
+      //   throw new ConflictException(
+      //     'Packaging material quantity is less or equal to the reorder level. Kindly Restock and try again',
+      //   );
+      // }
 
       // packagingMaterial.quantity -= usedQuantity;
-      // await packagingMaterial.save();
 
       const finishedProductPackagingMaterial =
         new FinishedProductPackagingMaterial();
-      //finishedProductPackagingMaterial.finishedProduct = finishedProduct;
       finishedProductPackagingMaterial.packagingMaterial = packagingMaterial;
       finishedProductPackagingMaterial.usedQuantity = usedQuantity;
 
@@ -131,8 +121,124 @@ export class FinishedProductService extends AbstractService<FinishedProduct> {
     finishedProduct.finishedProductRawMaterial = rawMaterialDummy;
     finishedProduct.finishedProductPackagingMaterial = packagingMaterialDummy;
 
-    //console.log(finishedProduct);
-
     return await finishedProduct.save();
+  }
+
+  async finishedProductApprovalStatus(
+    id: string,
+    productApprovalStatusDto: FinishedProductApprovalStatusDto,
+  ): Promise<FinishedProduct> {
+    const options: any = { id };
+    const entity = await this.finishedProductRepository.findOne({
+      where: options,
+      relations: [
+        'finishedProductRawMaterial',
+        'finishedProductRawMaterial.rawMaterial',
+        'finishedProductPackagingMaterial',
+        'finishedProductPackagingMaterial.packagingMaterial',
+      ],
+    });
+
+    if (!entity) throw new NotFoundException('Finished product not found!');
+
+    if (
+      productApprovalStatusDto.approvalStatus == MaterialApprovalStatus.APPROVED
+    ) {
+      for (const materials of Object.values(
+        entity.finishedProductRawMaterial,
+      )) {
+        const { usedQuantity, rawMaterial } = materials;
+
+        if (rawMaterial.quantity - usedQuantity <= rawMaterial.reserve) {
+          throw new ConflictException(
+            'Raw material quantity is less or equal to the reorder level. Kindly Restock and try again',
+          );
+        }
+
+        rawMaterial.quantity -= usedQuantity;
+      }
+
+      for (const materials of Object.values(
+        entity.finishedProductPackagingMaterial,
+      )) {
+        const { usedQuantity, packagingMaterial } = materials;
+
+        if (
+          packagingMaterial.quantity - usedQuantity <=
+          packagingMaterial.reserve
+        ) {
+          throw new ConflictException(
+            'Packaging material quantity is less or equal to the reorder level. Kindly Restock and try again',
+          );
+        }
+
+        packagingMaterial.quantity -= usedQuantity;
+      }
+      entity.approvalStatus = MaterialApprovalStatus.APPROVED;
+      entity.approvalDate = new Date();
+    }
+
+    if (
+      productApprovalStatusDto.approvalStatus ==
+      MaterialApprovalStatus.DISAPPROVED
+    ) {
+      this.handleDisapproval(productApprovalStatusDto, entity);
+    }
+
+    return await entity.save();
+  }
+
+  async handleDisapproval(
+    productApprovalStatusDto: FinishedProductApprovalStatusDto,
+    entity: FinishedProduct,
+  ): Promise<void> {
+    if (productApprovalStatusDto.reasonForDisapproval != undefined) {
+      entity.approvalStatus = MaterialApprovalStatus.DISAPPROVED;
+      entity.approvalDate = new Date();
+      entity.reasonForDisapproval =
+        productApprovalStatusDto.reasonForDisapproval;
+    } else {
+      throw new ConflictException(
+        'Reason for disapproval is required when a product is marked as disapproved.',
+      );
+    }
+  }
+
+  async findByApprovalStatus(
+    approvalStatus: MaterialApprovalStatus,
+    page: number,
+    limit: number,
+    companyId: string,
+  ): Promise<PaginationResponseDto<FinishedProduct>> {
+    const [data, totalCount] =
+      await this.finishedProductRepository.findAndCount({
+        where: {
+          approvalStatus: approvalStatus,
+          company: {
+            id: companyId,
+          },
+        },
+        relations: [
+          'finishedProductRawMaterial',
+          'finishedProductRawMaterial.rawMaterial',
+          'finishedProductPackagingMaterial',
+          'finishedProductPackagingMaterial.packagingMaterial',
+        ],
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+    const totalPages = Math.ceil(totalCount / limit);
+
+    const paginatedResponse: PaginationResponseDto<FinishedProduct> = {
+      data,
+      meta: {
+        totalCount,
+        totalPages,
+        currentPage: page,
+        pageSize: limit,
+      },
+    };
+
+    return paginatedResponse;
   }
 }

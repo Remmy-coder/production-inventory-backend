@@ -17,7 +17,7 @@ import { CompanyService } from './company.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
-import { AddCurrencyCompanyDto } from './dto/addCurrency-company.dto';
+import { SetCompanyCurrencyDto } from './dto/set-company-currency.dto';
 
 @ApiTags('company')
 @Controller('company')
@@ -71,22 +71,27 @@ export class CompanyController {
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body() updateCompanyDto: UpdateCompanyDto,
+    @Body(SETTINGS.VALIDATION_PIPE) updateCompanyDto: UpdateCompanyDto,
   ) {
     return await this.companyService.updateCompany(id, updateCompanyDto);
   }
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    return this.companyService.remove(id);
+    return await this.companyService.remove(id);
   }
 
   @Patch(':id/addCurrency')
   async addCurrency(
     @Param('id') id: string,
     @Body(SETTINGS.VALIDATION_PIPE)
-    addCurrencyCompanyDto: AddCurrencyCompanyDto,
+    addCurrencyCompanyDto: SetCompanyCurrencyDto,
   ) {
     return await this.companyService.addCurrency(id, addCurrencyCompanyDto);
+  }
+
+  @Get(':id/companyActivation')
+  async activateCompany(@Param('id') id: string) {
+    return await this.companyService.activateCompany(id);
   }
 }

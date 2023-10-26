@@ -1,6 +1,7 @@
 import { Company } from 'src/company/entities/company.entity';
 import { FinishedProduct } from 'src/finished-product/entities/finished-product.entity';
 import { Supplier } from 'src/supplier/entities/supplier.entity';
+import { MaterialApprovalStatus } from 'src/utils/enums/material-approval-status.enum';
 import {
   BaseEntity,
   Column,
@@ -44,6 +45,18 @@ export class PackagingMaterial extends BaseEntity {
 
   @ManyToOne(() => Supplier, (supplier) => supplier.packagingMaterials)
   supplier: Supplier;
+
+  @Column({
+    enum: MaterialApprovalStatus,
+    default: MaterialApprovalStatus.PENDING,
+  })
+  approvalStatus: MaterialApprovalStatus;
+
+  @Column({ type: 'timestamp', nullable: true })
+  approvalDate: Date;
+
+  @Column({ nullable: true, length: 100 })
+  reasonForDisapproval: string;
 
   @CreateDateColumn()
   createdAt: Date;

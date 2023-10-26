@@ -1,9 +1,11 @@
+import { timeStamp } from 'console';
 import { Currencies } from 'src/currencies/entities/currencies.entity';
 import { FinishedProduct } from 'src/finished-product/entities/finished-product.entity';
 import { PackagingMaterial } from 'src/packaging-material/entities/packaging-material.entity';
 import { RawMaterial } from 'src/raw-material/entities/raw-material.entity';
 import { Supplier } from 'src/supplier/entities/supplier.entity';
 import { User } from 'src/user/entities/user.entity';
+import { CompanyActivationStatus } from 'src/utils/enums/company-activation-status.enum';
 import {
   BaseEntity,
   Column,
@@ -64,6 +66,15 @@ export class Company extends BaseEntity {
     { cascade: true },
   )
   finishedProducts: FinishedProduct[];
+
+  @Column({
+    enum: CompanyActivationStatus,
+    default: CompanyActivationStatus.NOT_ACTIVATED,
+  })
+  activationStatus: CompanyActivationStatus;
+
+  @Column({ type: 'timestamp', nullable: true })
+  activationDate: Date;
 
   @CreateDateColumn()
   createdAt: Date;

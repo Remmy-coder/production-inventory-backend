@@ -1,9 +1,9 @@
 import { Module, OnApplicationBootstrap } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { CompanyModule } from './company/company.module';
-import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { CurrenciesModule } from './currencies/currencies.module';
 import { SeederService } from './seeders/seeder.service';
@@ -18,11 +18,15 @@ import { HttpExceptionFilter } from './utils/exceptionFilters/http-exception.fil
 import { FinishedProductModule } from './finished-product/finished-product.module';
 import { FinishedProductRawMaterialModule } from './finished-product-raw-material/finished-product-raw-material.module';
 import { FinishedProductPackagingMaterialModule } from './finished-product-packaging-material/finished-product-packaging-material.module';
+import configuration from './config/configuration';
 
 @Module({
   imports: [
     DatabaseModule,
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration],
+    }),
     CompanyModule,
     UserModule,
     CurrenciesModule,
