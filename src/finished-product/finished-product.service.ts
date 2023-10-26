@@ -98,17 +98,6 @@ export class FinishedProductService extends AbstractService<FinishedProduct> {
         throw new ConflictException('Packaging material does not exist');
       }
 
-      // if (
-      //   packagingMaterial.quantity - usedQuantity <=
-      //   packagingMaterial.reserve
-      // ) {
-      //   throw new ConflictException(
-      //     'Packaging material quantity is less or equal to the reorder level. Kindly Restock and try again',
-      //   );
-      // }
-
-      // packagingMaterial.quantity -= usedQuantity;
-
       const finishedProductPackagingMaterial =
         new FinishedProductPackagingMaterial();
       finishedProductPackagingMaterial.packagingMaterial = packagingMaterial;
