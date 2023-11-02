@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -25,28 +26,34 @@ export class UserService extends AbstractService<User> {
   }
 
   async userRegistration(createUserDto: CreateUserDto): Promise<User> {
-    const company = await this.companyService.findById(createUserDto.companyId);
+    try {
+      const company = await this.companyService.findById(
+        createUserDto.companyId,
+      );
 
-    if (!company) {
-      throw new ConflictException('Company does not exists');
+      if (!company) {
+        throw new ConflictException('Company does not exists');
+      }
+      // const generatedID = uuidv4();
+      // const user = new User();
+      // user.id = generatedID;
+      // user.firstName = createUserDto.firstName;
+      // user.lastName = createUserDto.lastName;
+      // user.email = createUserDto.email;
+      // user.gender = createUserDto.gender;
+      // user.password = createUserDto.password;
+      // user.company = company;
+
+      return this.create(
+        createUserDto,
+        User, // Provide the entity class constructor.
+        (dto) => ({
+          company,
+        }),
+      );
+    } catch (error) {
+      throw new BadRequestException(error);
     }
-    // const generatedID = uuidv4();
-    // const user = new User();
-    // user.id = generatedID;
-    // user.firstName = createUserDto.firstName;
-    // user.lastName = createUserDto.lastName;
-    // user.email = createUserDto.email;
-    // user.gender = createUserDto.gender;
-    // user.password = createUserDto.password;
-    // user.company = company;
-
-    return this.create(
-      createUserDto,
-      User, // Provide the entity class constructor.
-      (dto) => ({
-        company,
-      }),
-    );
   }
 
   async findAll(): Promise<User[]> {
@@ -63,29 +70,33 @@ export class UserService extends AbstractService<User> {
     page: number,
     limit: number,
   ): Promise<PaginationResponseDto<User>> {
-    const [data, totalCount] = await this.userRepository.findAndCount({
-      relations: {
-        company: {
-          currency: true,
+    try {
+      const [data, totalCount] = await this.userRepository.findAndCount({
+        relations: {
+          company: {
+            currency: true,
+          },
         },
-      },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+        skip: (page - 1) * limit,
+        take: limit,
+      });
 
-    const totalPages = Math.ceil(totalCount / limit);
+      const totalPages = Math.ceil(totalCount / limit);
 
-    const paginatedResponse: PaginationResponseDto<User> = {
-      data,
-      meta: {
-        totalCount,
-        totalPages,
-        currentPage: page,
-        pageSize: limit,
-      },
-    };
+      const paginatedResponse: PaginationResponseDto<User> = {
+        data,
+        meta: {
+          totalCount,
+          totalPages,
+          currentPage: page,
+          pageSize: limit,
+        },
+      };
 
-    return paginatedResponse;
+      return paginatedResponse;
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   async findOne(id: string): Promise<Partial<User>> {
@@ -115,29 +126,37 @@ export class UserService extends AbstractService<User> {
   }
 
   async updateUser(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-    const options: any = { id };
-    const entity = await this.userRepository.findOne({
-      where: options,
-    });
+    try {
+      const options: any = { id };
+      const entity = await this.userRepository.findOne({
+        where: options,
+      });
 
-    if (!entity) throw new NotFoundException('User not found!');
+      if (!entity) throw new NotFoundException('User not found!');
 
-    entity.firstName = updateUserDto.firstName || entity.firstName;
-    entity.lastName = updateUserDto.lastName || entity.lastName;
-    entity.email = updateUserDto.email || entity.email;
-    entity.gender = updateUserDto.gender || entity.gender;
+      entity.firstName = updateUserDto.firstName || entity.firstName;
+      entity.lastName = updateUserDto.lastName || entity.lastName;
+      entity.email = updateUserDto.email || entity.email;
+      entity.gender = updateUserDto.gender || entity.gender;
 
-    return this.userRepository.save(entity);
+      return this.userRepository.save(entity);
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   async remove(id: string): Promise<User> {
-    const options: any = { id };
-    const entity = await this.userRepository.findOne({
-      where: options,
-    });
+    try {
+      const options: any = { id };
+      const entity = await this.userRepository.findOne({
+        where: options,
+      });
 
-    if (!entity) throw new NotFoundException('User not found!');
+      if (!entity) throw new NotFoundException('User not found!');
 
-    return this.userRepository.remove(entity);
+      return this.userRepository.remove(entity);
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 }

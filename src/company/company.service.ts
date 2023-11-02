@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpException,
   HttpStatus,
   Inject,
@@ -41,91 +42,87 @@ export class CompanyService extends AbstractService<Company> {
     return await company.save();
   }
 
-  // async findAll(): Promise<Company[]> {
-  //   return await this.repository.find({
-  //     relations: {
-  //       currency: true,
-  //     },
-  //   });
-  // }
-
-  // async findOne(id: string): Promise<Company> {
-  //   const options: any = { id };
-  //   const entity = await this.companyRepository.findOne({
-  //     where: options,
-  //     relations: {
-  //       currency: true,
-  //     },
-  //   });
-
-  //   return entity;
-  // }
-
   async updateCompany(
     id: string,
     updateCompanyDto: UpdateCompanyDto,
   ): Promise<Company> {
-    const options: any = { id };
-    const entity = await this.companyRepository.findOne({
-      where: options,
-    });
+    try {
+      const options: any = { id };
+      const entity = await this.companyRepository.findOne({
+        where: options,
+      });
 
-    if (!entity) throw new NotFoundException('Company not found!');
+      if (!entity) throw new NotFoundException('Company not found!');
 
-    entity.name = updateCompanyDto.name || entity.name;
-    entity.email = updateCompanyDto.email || entity.email;
-    entity.country = updateCompanyDto.country || entity.country;
-    entity.state = updateCompanyDto.state || entity.state;
-    entity.address = updateCompanyDto.address || entity.address;
+      entity.name = updateCompanyDto.name || entity.name;
+      entity.email = updateCompanyDto.email || entity.email;
+      entity.country = updateCompanyDto.country || entity.country;
+      entity.state = updateCompanyDto.state || entity.state;
+      entity.address = updateCompanyDto.address || entity.address;
 
-    return this.companyRepository.save(entity);
+      return this.companyRepository.save(entity);
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   async addCurrency(
     id: string,
     addCurrencyCompanyDto: SetCompanyCurrencyDto,
   ): Promise<Company> {
-    const companyId: any = { id };
+    try {
+      const companyId: any = { id };
 
-    const company = await this.companyRepository.findOne({
-      where: companyId,
-    });
+      const company = await this.companyRepository.findOne({
+        where: companyId,
+      });
 
-    const currency = await this.currenciesService.findOneByCode(
-      addCurrencyCompanyDto.cc,
-    );
+      const currency = await this.currenciesService.findOneByCode(
+        addCurrencyCompanyDto.cc,
+      );
 
-    if (!company) throw new NotFoundException('Company not found!');
+      if (!company) throw new NotFoundException('Company not found!');
 
-    if (!currency) throw new NotFoundException('Currency not found!');
+      if (!currency) throw new NotFoundException('Currency not found!');
 
-    company.currency = currency;
+      company.currency = currency;
 
-    return this.companyRepository.save(company);
+      return this.companyRepository.save(company);
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   async remove(id: string): Promise<Company> {
-    const options: any = { id };
-    const entity = await this.companyRepository.findOne({
-      where: options,
-    });
+    try {
+      const options: any = { id };
+      const entity = await this.companyRepository.findOne({
+        where: options,
+      });
 
-    if (!entity) throw new NotFoundException('Company not found!');
+      if (!entity) throw new NotFoundException('Company not found!');
 
-    return this.companyRepository.remove(entity);
+      return this.companyRepository.remove(entity);
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   async activateCompany(id: string): Promise<Company> {
-    const company = await this.companyRepository.findOne({
-      where: { id: id },
-    });
+    try {
+      const company = await this.companyRepository.findOne({
+        where: { id: id },
+      });
 
-    if (!company) {
-      throw new NotFoundException('Company not found');
+      if (!company) {
+        throw new NotFoundException('Company not found');
+      }
+      company.activationStatus = CompanyActivationStatus.ACTIVATED;
+      company.activationDate = new Date();
+
+      return this.companyRepository.save(company);
+    } catch (error) {
+      throw new BadRequestException(error);
     }
-    company.activationStatus = CompanyActivationStatus.ACTIVATED;
-    company.activationDate = new Date();
-
-    return this.companyRepository.save(company);
   }
 }
