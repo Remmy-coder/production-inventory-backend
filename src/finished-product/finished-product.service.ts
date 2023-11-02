@@ -3,6 +3,7 @@ import {
   Inject,
   ConflictException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { CreateFinishedProductDto } from './dto/create-finished-product.dto';
 import { UpdateFinishedProductDto } from './dto/update-finished-product.dto';
@@ -43,153 +44,160 @@ export class FinishedProductService extends AbstractService<FinishedProduct> {
     ]);
   }
 
-  async debitItem(
-    item: RawMaterial | PackagingMaterial,
-    usedQuantity: number,
-  ): Promise<void> {
-    item.quantity -= usedQuantity;
-    await item.save();
-  }
-
   async createProduct(
     createFinishedProductDto: CreateFinishedProductDto,
-  ): Promise<any> {
-    const company = await this.companyService.findById(
-      createFinishedProductDto.companyId,
-    );
-
-    if (!company) {
-      throw new ConflictException('Company does not exists');
-    }
-
-    const finishedProduct = new FinishedProduct();
-    Object.assign(finishedProduct, createFinishedProductDto);
-    finishedProduct.company = company;
-
-    const rawMaterialDummy: FinishedProductRawMaterial[] = [];
-
-    const packagingMaterialDummy: FinishedProductPackagingMaterial[] = [];
-
-    for (const rawMaterials of createFinishedProductDto.finishedProductRawMaterial) {
-      const { rawMaterialId, usedQuantity } = rawMaterials;
-
-      const rawMaterial = await this.rawMaterialService.findById(rawMaterialId);
-
-      if (!rawMaterial) {
-        throw new ConflictException('Raw material does not exist');
-      }
-
-      const finishedProductRawMaterial = new FinishedProductRawMaterial();
-      finishedProductRawMaterial.rawMaterial = rawMaterial;
-      finishedProductRawMaterial.usedQuantity = usedQuantity;
-
-      await finishedProductRawMaterial.save();
-      rawMaterialDummy.push(finishedProductRawMaterial);
-    }
-
-    for (const packagingMaterials of createFinishedProductDto.finishedProductPackagingMaterial) {
-      const { packagingMaterialId, usedQuantity } = packagingMaterials;
-
-      const packagingMaterial = await this.packagingMaterialService.findById(
-        packagingMaterialId,
+  ): Promise<FinishedProduct> {
+    try {
+      const company = await this.companyService.findById(
+        createFinishedProductDto.companyId,
       );
 
-      if (!packagingMaterial) {
-        throw new ConflictException('Packaging material does not exist');
+      if (!company) {
+        throw new ConflictException('Company does not exists');
       }
 
-      const finishedProductPackagingMaterial =
-        new FinishedProductPackagingMaterial();
-      finishedProductPackagingMaterial.packagingMaterial = packagingMaterial;
-      finishedProductPackagingMaterial.usedQuantity = usedQuantity;
+      const finishedProduct = new FinishedProduct();
+      Object.assign(finishedProduct, createFinishedProductDto);
+      finishedProduct.company = company;
 
-      await finishedProductPackagingMaterial.save();
-      packagingMaterialDummy.push(finishedProductPackagingMaterial);
+      const rawMaterialDummy: FinishedProductRawMaterial[] = [];
+
+      const packagingMaterialDummy: FinishedProductPackagingMaterial[] = [];
+
+      for (const rawMaterials of createFinishedProductDto.finishedProductRawMaterial) {
+        const { rawMaterialId, usedQuantity } = rawMaterials;
+
+        const rawMaterial = await this.rawMaterialService.findById(
+          rawMaterialId,
+        );
+
+        if (!rawMaterial) {
+          throw new ConflictException('Raw material does not exist');
+        }
+
+        const finishedProductRawMaterial = new FinishedProductRawMaterial();
+        finishedProductRawMaterial.rawMaterial = rawMaterial;
+        finishedProductRawMaterial.usedQuantity = usedQuantity;
+
+        await finishedProductRawMaterial.save();
+        rawMaterialDummy.push(finishedProductRawMaterial);
+      }
+
+      for (const packagingMaterials of createFinishedProductDto.finishedProductPackagingMaterial) {
+        const { packagingMaterialId, usedQuantity } = packagingMaterials;
+
+        const packagingMaterial = await this.packagingMaterialService.findById(
+          packagingMaterialId,
+        );
+
+        if (!packagingMaterial) {
+          throw new ConflictException('Packaging material does not exist');
+        }
+
+        const finishedProductPackagingMaterial =
+          new FinishedProductPackagingMaterial();
+        finishedProductPackagingMaterial.packagingMaterial = packagingMaterial;
+        finishedProductPackagingMaterial.usedQuantity = usedQuantity;
+
+        await finishedProductPackagingMaterial.save();
+        packagingMaterialDummy.push(finishedProductPackagingMaterial);
+      }
+
+      finishedProduct.finishedProductRawMaterial = rawMaterialDummy;
+      finishedProduct.finishedProductPackagingMaterial = packagingMaterialDummy;
+
+      return await finishedProduct.save();
+    } catch (error) {
+      throw new BadRequestException(error);
     }
-
-    finishedProduct.finishedProductRawMaterial = rawMaterialDummy;
-    finishedProduct.finishedProductPackagingMaterial = packagingMaterialDummy;
-
-    return await finishedProduct.save();
   }
 
   async finishedProductApprovalStatus(
     id: string,
     productApprovalStatusDto: FinishedProductApprovalStatusDto,
   ): Promise<FinishedProduct> {
-    const options: any = { id };
-    const entity = await this.finishedProductRepository.findOne({
-      where: options,
-      relations: [
-        'finishedProductRawMaterial',
-        'finishedProductRawMaterial.rawMaterial',
-        'finishedProductPackagingMaterial',
-        'finishedProductPackagingMaterial.packagingMaterial',
-      ],
-    });
+    try {
+      const options: any = { id };
+      const entity = await this.finishedProductRepository.findOne({
+        where: options,
+        relations: [
+          'finishedProductRawMaterial',
+          'finishedProductRawMaterial.rawMaterial',
+          'finishedProductPackagingMaterial',
+          'finishedProductPackagingMaterial.packagingMaterial',
+        ],
+      });
 
-    if (!entity) throw new NotFoundException('Finished product not found!');
+      if (!entity) throw new NotFoundException('Finished product not found!');
 
-    if (
-      productApprovalStatusDto.approvalStatus == MaterialApprovalStatus.APPROVED
-    ) {
-      for (const materials of Object.values(
-        entity.finishedProductRawMaterial,
-      )) {
-        const { usedQuantity, rawMaterial } = materials;
+      if (
+        productApprovalStatusDto.approvalStatus ==
+        MaterialApprovalStatus.APPROVED
+      ) {
+        for (const materials of Object.values(
+          entity.finishedProductRawMaterial,
+        )) {
+          const { usedQuantity, rawMaterial } = materials;
 
-        if (rawMaterial.quantity - usedQuantity <= rawMaterial.reserve) {
-          throw new ConflictException(
-            'Raw material quantity is less or equal to the reorder level. Kindly Restock and try again',
-          );
+          if (rawMaterial.quantity - usedQuantity <= rawMaterial.reserve) {
+            throw new ConflictException(
+              'Raw material quantity is less or equal to the reorder level. Kindly Restock and try again',
+            );
+          }
+
+          rawMaterial.quantity -= usedQuantity;
         }
 
-        rawMaterial.quantity -= usedQuantity;
-      }
+        for (const materials of Object.values(
+          entity.finishedProductPackagingMaterial,
+        )) {
+          const { usedQuantity, packagingMaterial } = materials;
 
-      for (const materials of Object.values(
-        entity.finishedProductPackagingMaterial,
-      )) {
-        const { usedQuantity, packagingMaterial } = materials;
+          if (
+            packagingMaterial.quantity - usedQuantity <=
+            packagingMaterial.reserve
+          ) {
+            throw new ConflictException(
+              'Packaging material quantity is less or equal to the reorder level. Kindly Restock and try again',
+            );
+          }
 
-        if (
-          packagingMaterial.quantity - usedQuantity <=
-          packagingMaterial.reserve
-        ) {
-          throw new ConflictException(
-            'Packaging material quantity is less or equal to the reorder level. Kindly Restock and try again',
-          );
+          packagingMaterial.quantity -= usedQuantity;
         }
-
-        packagingMaterial.quantity -= usedQuantity;
+        entity.approvalStatus = MaterialApprovalStatus.APPROVED;
+        entity.approvalDate = new Date();
       }
-      entity.approvalStatus = MaterialApprovalStatus.APPROVED;
-      entity.approvalDate = new Date();
-    }
 
-    if (
-      productApprovalStatusDto.approvalStatus ==
-      MaterialApprovalStatus.DISAPPROVED
-    ) {
-      this.handleDisapproval(productApprovalStatusDto, entity);
-    }
+      if (
+        productApprovalStatusDto.approvalStatus ==
+        MaterialApprovalStatus.DISAPPROVED
+      ) {
+        this.handleDisapproval(productApprovalStatusDto, entity);
+      }
 
-    return await entity.save();
+      return await entity.save();
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   async handleDisapproval(
     productApprovalStatusDto: FinishedProductApprovalStatusDto,
     entity: FinishedProduct,
   ): Promise<void> {
-    if (productApprovalStatusDto.reasonForDisapproval != undefined) {
-      entity.approvalStatus = MaterialApprovalStatus.DISAPPROVED;
-      entity.approvalDate = new Date();
-      entity.reasonForDisapproval =
-        productApprovalStatusDto.reasonForDisapproval;
-    } else {
-      throw new ConflictException(
-        'Reason for disapproval is required when a product is marked as disapproved.',
-      );
+    try {
+      if (productApprovalStatusDto.reasonForDisapproval != undefined) {
+        entity.approvalStatus = MaterialApprovalStatus.DISAPPROVED;
+        entity.approvalDate = new Date();
+        entity.reasonForDisapproval =
+          productApprovalStatusDto.reasonForDisapproval;
+      } else {
+        throw new ConflictException(
+          'Reason for disapproval is required when a product is marked as disapproved.',
+        );
+      }
+    } catch (error) {
+      throw new BadRequestException(error);
     }
   }
 
@@ -199,35 +207,39 @@ export class FinishedProductService extends AbstractService<FinishedProduct> {
     limit: number,
     companyId: string,
   ): Promise<PaginationResponseDto<FinishedProduct>> {
-    const [data, totalCount] =
-      await this.finishedProductRepository.findAndCount({
-        where: {
-          approvalStatus: approvalStatus,
-          company: {
-            id: companyId,
+    try {
+      const [data, totalCount] =
+        await this.finishedProductRepository.findAndCount({
+          where: {
+            approvalStatus: approvalStatus,
+            company: {
+              id: companyId,
+            },
           },
+          relations: [
+            'finishedProductRawMaterial',
+            'finishedProductRawMaterial.rawMaterial',
+            'finishedProductPackagingMaterial',
+            'finishedProductPackagingMaterial.packagingMaterial',
+          ],
+          skip: (page - 1) * limit,
+          take: limit,
+        });
+      const totalPages = Math.ceil(totalCount / limit);
+
+      const paginatedResponse: PaginationResponseDto<FinishedProduct> = {
+        data,
+        meta: {
+          totalCount,
+          totalPages,
+          currentPage: page,
+          pageSize: limit,
         },
-        relations: [
-          'finishedProductRawMaterial',
-          'finishedProductRawMaterial.rawMaterial',
-          'finishedProductPackagingMaterial',
-          'finishedProductPackagingMaterial.packagingMaterial',
-        ],
-        skip: (page - 1) * limit,
-        take: limit,
-      });
-    const totalPages = Math.ceil(totalCount / limit);
+      };
 
-    const paginatedResponse: PaginationResponseDto<FinishedProduct> = {
-      data,
-      meta: {
-        totalCount,
-        totalPages,
-        currentPage: page,
-        pageSize: limit,
-      },
-    };
-
-    return paginatedResponse;
+      return paginatedResponse;
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 }

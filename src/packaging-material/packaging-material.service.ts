@@ -3,6 +3,7 @@ import {
   Inject,
   ConflictException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { CreatePackagingMaterialDto } from './dto/create-packaging-material.dto';
 import { UpdatePackagingMaterialDto } from './dto/update-packaging-material.dto';
@@ -36,109 +37,128 @@ export class PackagingMaterialService extends AbstractService<PackagingMaterial>
   async createPackagingMaterial(
     createPackagingMaterialDto: CreatePackagingMaterialDto,
   ): Promise<PackagingMaterial> {
-    const supplier = await this.supplierService.findById(
-      createPackagingMaterialDto.supplierId,
-    );
+    try {
+      const supplier = await this.supplierService.findById(
+        createPackagingMaterialDto.supplierId,
+      );
 
-    if (!supplier) {
-      throw new ConflictException('Supplier does not exists');
+      if (!supplier) {
+        throw new ConflictException('Supplier does not exists');
+      }
+
+      const company = await this.companyService.findById(supplier.company.id);
+
+      if (!company) {
+        throw new ConflictException('Company does not exists');
+      }
+
+      // const packagingMaterial = new PackagingMaterial();
+      // Object.assign(packagingMaterial, createPackagingMaterialDto);
+      // packagingMaterial.company = company;
+      // packagingMaterial.supplier = supplier;
+
+      return this.create(
+        createPackagingMaterialDto,
+        PackagingMaterial, // Provide the entity class constructor.
+        (dto) => ({
+          company,
+          supplier,
+        }),
+      );
+    } catch (error) {
+      throw new BadRequestException(error);
     }
-
-    const company = await this.companyService.findById(supplier.company.id);
-
-    if (!company) {
-      throw new ConflictException('Company does not exists');
-    }
-
-    // const packagingMaterial = new PackagingMaterial();
-    // Object.assign(packagingMaterial, createPackagingMaterialDto);
-    // packagingMaterial.company = company;
-    // packagingMaterial.supplier = supplier;
-
-    return this.create(
-      createPackagingMaterialDto,
-      PackagingMaterial, // Provide the entity class constructor.
-      (dto) => ({
-        company,
-        supplier,
-      }),
-    );
   }
 
   async updatePackagingMaterial(
     id: string,
     updatePackagingMaterialDto: UpdatePackagingMaterialDto,
   ): Promise<PackagingMaterial> {
-    const options: any = { id };
-    const entity = await this.packagingMaterialRepository.findOne({
-      where: options,
-    });
+    try {
+      const options: any = { id };
+      const entity = await this.packagingMaterialRepository.findOne({
+        where: options,
+      });
 
-    const supplier = await this.supplierService.findById(
-      updatePackagingMaterialDto.supplierId,
-    );
+      const supplier = await this.supplierService.findById(
+        updatePackagingMaterialDto.supplierId,
+      );
 
-    if (!entity) throw new NotFoundException('Packaging material not found!');
+      if (!entity) throw new NotFoundException('Packaging material not found!');
 
-    if (!supplier) throw new NotFoundException('Supplier not found');
+      if (!supplier) throw new NotFoundException('Supplier not found');
 
-    if (entity.company.id !== supplier.company.id)
-      throw new ConflictException('Supplier does not belong to this company.');
+      if (entity.company.id !== supplier.company.id)
+        throw new ConflictException(
+          'Supplier does not belong to this company.',
+        );
 
-    entity.name = updatePackagingMaterialDto.name || entity.name;
-    entity.barcode = updatePackagingMaterialDto.barcode || entity.barcode;
-    entity.sku = updatePackagingMaterialDto.sku || entity.sku;
-    entity.basePrice = updatePackagingMaterialDto.basePrice || entity.basePrice;
-    entity.quantity = updatePackagingMaterialDto.quantity || entity.quantity;
-    entity.reserve = updatePackagingMaterialDto.reserve || entity.reserve;
-    entity.unit = updatePackagingMaterialDto.unit || entity.unit;
-    entity.supplier = supplier || entity.supplier;
+      entity.name = updatePackagingMaterialDto.name || entity.name;
+      entity.barcode = updatePackagingMaterialDto.barcode || entity.barcode;
+      entity.sku = updatePackagingMaterialDto.sku || entity.sku;
+      entity.basePrice =
+        updatePackagingMaterialDto.basePrice || entity.basePrice;
+      entity.quantity = updatePackagingMaterialDto.quantity || entity.quantity;
+      entity.reserve = updatePackagingMaterialDto.reserve || entity.reserve;
+      entity.unit = updatePackagingMaterialDto.unit || entity.unit;
+      entity.supplier = supplier || entity.supplier;
 
-    return await entity.save();
+      return await entity.save();
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   async packagingMaterialApprovalStatus(
     id: string,
     materialApprovalStatusDto: PackagingMaterialApprovalStatusDto,
   ): Promise<PackagingMaterial> {
-    const options: any = { id };
-    const entity = await this.packagingMaterialRepository.findOne({
-      where: options,
-    });
+    try {
+      const options: any = { id };
+      const entity = await this.packagingMaterialRepository.findOne({
+        where: options,
+      });
 
-    if (!entity) throw new NotFoundException('Raw material not found!');
+      if (!entity) throw new NotFoundException('Raw material not found!');
 
-    if (
-      materialApprovalStatusDto.approvalStatus ==
-      MaterialApprovalStatus.APPROVED
-    ) {
-      entity.approvalStatus = MaterialApprovalStatus.APPROVED;
-      entity.approvalDate = new Date();
+      if (
+        materialApprovalStatusDto.approvalStatus ==
+        MaterialApprovalStatus.APPROVED
+      ) {
+        entity.approvalStatus = MaterialApprovalStatus.APPROVED;
+        entity.approvalDate = new Date();
+      }
+
+      if (
+        materialApprovalStatusDto.approvalStatus ==
+        MaterialApprovalStatus.DISAPPROVED
+      ) {
+        this.handleDisapproval(materialApprovalStatusDto, entity);
+      }
+
+      return await entity.save();
+    } catch (error) {
+      throw new BadRequestException(error);
     }
-
-    if (
-      materialApprovalStatusDto.approvalStatus ==
-      MaterialApprovalStatus.DISAPPROVED
-    ) {
-      this.handleDisapproval(materialApprovalStatusDto, entity);
-    }
-
-    return await entity.save();
   }
 
   async handleDisapproval(
     materialApprovalStatusDto: PackagingMaterialApprovalStatusDto,
     entity: PackagingMaterial,
   ): Promise<void> {
-    if (materialApprovalStatusDto.reasonForDisapproval != undefined) {
-      entity.approvalStatus = MaterialApprovalStatus.DISAPPROVED;
-      entity.approvalDate = new Date();
-      entity.reasonForDisapproval =
-        materialApprovalStatusDto.reasonForDisapproval;
-    } else {
-      throw new ConflictException(
-        'Reason for disapproval is required when a material is marked as disapproved.',
-      );
+    try {
+      if (materialApprovalStatusDto.reasonForDisapproval != undefined) {
+        entity.approvalStatus = MaterialApprovalStatus.DISAPPROVED;
+        entity.approvalDate = new Date();
+        entity.reasonForDisapproval =
+          materialApprovalStatusDto.reasonForDisapproval;
+      } else {
+        throw new ConflictException(
+          'Reason for disapproval is required when a material is marked as disapproved.',
+        );
+      }
+    } catch (error) {
+      throw new BadRequestException(error);
     }
   }
 
@@ -148,37 +168,41 @@ export class PackagingMaterialService extends AbstractService<PackagingMaterial>
     limit: number,
     companyId: string,
   ): Promise<PaginationResponseDto<PackagingMaterial>> {
-    const [data, totalCount] =
-      await this.packagingMaterialRepository.findAndCount({
-        where: {
-          approvalStatus: approvalStatus,
-          company: {
-            id: companyId,
-          },
-        } as unknown as
-          | FindOptionsWhere<PackagingMaterial>
-          | FindOptionsWhere<PackagingMaterial>[],
-        relations: [
-          'supplier',
-          'company',
-          'supplier.supplierContact',
-          'company.currency',
-        ],
-        skip: (page - 1) * limit,
-        take: limit,
-      });
-    const totalPages = Math.ceil(totalCount / limit);
+    try {
+      const [data, totalCount] =
+        await this.packagingMaterialRepository.findAndCount({
+          where: {
+            approvalStatus: approvalStatus,
+            company: {
+              id: companyId,
+            },
+          } as unknown as
+            | FindOptionsWhere<PackagingMaterial>
+            | FindOptionsWhere<PackagingMaterial>[],
+          relations: [
+            'supplier',
+            'company',
+            'supplier.supplierContact',
+            'company.currency',
+          ],
+          skip: (page - 1) * limit,
+          take: limit,
+        });
+      const totalPages = Math.ceil(totalCount / limit);
 
-    const paginatedResponse: PaginationResponseDto<PackagingMaterial> = {
-      data,
-      meta: {
-        totalCount,
-        totalPages,
-        currentPage: page,
-        pageSize: limit,
-      },
-    };
+      const paginatedResponse: PaginationResponseDto<PackagingMaterial> = {
+        data,
+        meta: {
+          totalCount,
+          totalPages,
+          currentPage: page,
+          pageSize: limit,
+        },
+      };
 
-    return paginatedResponse;
+      return paginatedResponse;
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 }
