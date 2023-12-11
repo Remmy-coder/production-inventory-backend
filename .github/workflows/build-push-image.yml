@@ -40,5 +40,5 @@ jobs:
 
       - name: Update Image Tag in Deployment File
         run: |
-         cd <repository-name>
+         cd pmsbackend-k8s-iac
          ls -la
