@@ -41,15 +41,11 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Clone other repository
-        env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-        run: |
-          mkdir -p pmsbackend-k8s-iac
-          cd pmsbackend-k8s-iac
-          git clone https://github.com/Remmy-coder/pmsbackend-k8s-iac .
-          git config --local credential.helper "store --file=.git/credentials"
-          git config --local user.email "remmy.ro@gmail.com"
-          git config --local user.name "Remmy-coder"
+        uses: GuillaumeFalourd/clone-github-repo-action@v2.2
+        with:
+          owner: "Remmy-coder"
+          repository: "pmsbackend-k8s-iac"
+          access-token: ${{ secrets.PAT_TOKEN }}
 
       - name: Update Image Tag in Deployment File
         run: |
