@@ -31,15 +31,6 @@ jobs:
       - name: Get commit hash
         run: echo "COMMIT_HASH=$GITHUB_SHA" >> $GITHUB_ENV
 
-      - name: Build and Push Image to Docker Hub
-        uses: mr-smithers-excellent/docker-build-push@v6
-        with:
-          image: remmyomeje/pms-repository
-          registry: docker.io
-          tags: ${COMMIT_HASH}
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
       - name: Clone other repository
         uses: GuillaumeFalourd/clone-github-repo-action@v2.2
         with:
@@ -49,4 +40,5 @@ jobs:
 
       - name: Update Image Tag in Deployment File
         run: |
-         ls pmsbackend-k8s-iac
+         cd <repository-name>
+         ls -la
