@@ -36,5 +36,5 @@ jobs:
       - name: Update Image Tag in Deployment File
         run: |
           cd pmsbackend-k8s-iac/dev
-          sed -i "s|remmyomeje/pms-repository:old-tag|remmyomeje/pms-repository:${COMMIT_HASH}|g" deployment.yaml
+          sed -i "s|remmyomeje/pms-repository:latest|remmyomeje/pms-repository:${COMMIT_HASH}|g" deployment.yaml
           cat deployment.yaml
