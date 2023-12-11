@@ -6,6 +6,7 @@ import { DatabaseModule } from 'src/database/database.module';
 import { CurrenciesProviders } from 'src/currencies/currencies.providers';
 import { CurrenciesService } from 'src/currencies/currencies.service';
 import { UserProviders } from 'src/user/user.providers';
+import { CustomMailerService } from 'src/custom-mailer/custom-mailer.service';
 
 @Module({
   imports: [DatabaseModule],
@@ -16,6 +17,7 @@ import { UserProviders } from 'src/user/user.providers';
     ...CurrenciesProviders,
     CompanyService,
     CurrenciesService,
+    CustomMailerService,
   ],
 })
 export class CompanyModule {}

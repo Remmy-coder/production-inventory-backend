@@ -9,6 +9,7 @@ import { CompanyProviders } from 'src/company/company.providers';
 import { CompanyService } from 'src/company/company.service';
 import { CurrenciesProviders } from 'src/currencies/currencies.providers';
 import { CurrenciesService } from 'src/currencies/currencies.service';
+import { CustomMailerService } from 'src/custom-mailer/custom-mailer.service';
 
 @Module({
   imports: [DatabaseModule],
@@ -22,6 +23,7 @@ import { CurrenciesService } from 'src/currencies/currencies.service';
     SupplierContactService,
     CompanyService,
     CurrenciesService,
+    CustomMailerService,
   ],
 })
 export class SupplierModule {}

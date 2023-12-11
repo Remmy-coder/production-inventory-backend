@@ -1,6 +1,8 @@
 import {
   BadRequestException,
   ConflictException,
+  HttpException,
+  HttpStatus,
   Inject,
   Injectable,
   NotFoundException,
@@ -14,6 +16,9 @@ import { userConstants } from './user.constants';
 import { v4 as uuidv4 } from 'uuid';
 import { PaginationResponseDto } from 'src/utils/pagination/pagination-response.dto';
 import { AbstractService } from 'src/common/abstract/abstract.service';
+import { CustomMailerService } from 'src/custom-mailer/custom-mailer.service';
+import { IUserEmailVerificationPayload } from 'src/custom-mailer/interfaces/userEmailVerification.interface';
+import { UserVerificationStatus } from 'src/utils/enums/user-verification-status.enum';
 
 @Injectable()
 export class UserService extends AbstractService<User> {
@@ -21,6 +26,7 @@ export class UserService extends AbstractService<User> {
     @Inject(userConstants.provide)
     private userRepository: Repository<User>,
     private readonly companyService: CompanyService,
+    private readonly customMailerService: CustomMailerService,
   ) {
     super(userRepository, ['company', 'company.currency']);
   }
@@ -34,25 +40,26 @@ export class UserService extends AbstractService<User> {
       if (!company) {
         throw new ConflictException('Company does not exists');
       }
-      // const generatedID = uuidv4();
-      // const user = new User();
-      // user.id = generatedID;
-      // user.firstName = createUserDto.firstName;
-      // user.lastName = createUserDto.lastName;
-      // user.email = createUserDto.email;
-      // user.gender = createUserDto.gender;
-      // user.password = createUserDto.password;
-      // user.company = company;
 
-      return this.create(
+      const newlyCreatedUser = await this.create(
         createUserDto,
         User, // Provide the entity class constructor.
         (dto) => ({
           company,
         }),
       );
+
+      const emailPayload: IUserEmailVerificationPayload = {
+        firstName: newlyCreatedUser.firstName,
+        verificationUrl: `http://localhost:3002/user/emailVerification/${newlyCreatedUser.verificationToken}`,
+        email: newlyCreatedUser.email,
+      };
+
+      this.customMailerService.userEmailVerification(emailPayload);
+
+      return newlyCreatedUser;
     } catch (error) {
-      throw new BadRequestException(error);
+      throw new HttpException(error.detail, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -95,7 +102,7 @@ export class UserService extends AbstractService<User> {
 
       return paginatedResponse;
     } catch (error) {
-      throw new BadRequestException(error);
+      throw new HttpException(error.detail, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -141,7 +148,7 @@ export class UserService extends AbstractService<User> {
 
       return this.userRepository.save(entity);
     } catch (error) {
-      throw new BadRequestException(error);
+      throw new HttpException(error.detail, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -156,7 +163,28 @@ export class UserService extends AbstractService<User> {
 
       return this.userRepository.remove(entity);
     } catch (error) {
-      throw new BadRequestException(error);
+      throw new HttpException(error.detail, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async verifyEmail(verificationToken: string): Promise<User> {
+    try {
+      const user = await this.userRepository.findOne({
+        where: {
+          verificationToken: verificationToken,
+        },
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found or already verified');
+      }
+
+      user.isVerified = UserVerificationStatus.VERIFIED;
+      user.verificationToken = null;
+
+      return this.userRepository.save(user);
+    } catch (error) {
+      throw new HttpException(error.detail, HttpStatus.BAD_REQUEST);
     }
   }
 }

@@ -19,6 +19,7 @@ import { SupplierProviders } from 'src/supplier/supplier.providers';
 import { FinishedProductPackagingMaterialService } from 'src/finished-product-packaging-material/finished-product-packaging-material.service';
 import { PackagingMaterialService } from 'src/packaging-material/packaging-material.service';
 import { PackagingMaterialProviders } from 'src/packaging-material/packaging-material.provider';
+import { CustomMailerService } from 'src/custom-mailer/custom-mailer.service';
 
 @Module({
   imports: [DatabaseModule],
@@ -42,6 +43,7 @@ import { PackagingMaterialProviders } from 'src/packaging-material/packaging-mat
     SupplierService,
     SupplierContactService,
     CurrenciesService,
+    CustomMailerService,
   ],
 })
 export class FinishedProductModule {}

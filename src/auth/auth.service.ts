@@ -5,6 +5,8 @@ import {
   Inject,
   ServiceUnavailableException,
   BadRequestException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
@@ -13,9 +15,11 @@ import * as speakeasy from 'speakeasy';
 import { Repository } from 'typeorm';
 import { User } from 'src/user/entities/user.entity';
 import { userConstants } from 'src/user/user.constants';
+import { CustomMailerService } from 'src/custom-mailer/custom-mailer.service';
+import { IOtpMailPayload } from 'src/custom-mailer/interfaces/otpMail.interface';
 
 interface IResOtp {
-  userData?: any;
+  userData?: Partial<User>;
   otpRes: boolean;
 }
 
@@ -25,6 +29,7 @@ export class AuthService {
     private userService: UserService,
     @Inject(userConstants.provide)
     private userRepository: Repository<User>,
+    private customMailerService: CustomMailerService,
   ) {}
 
   async signIn(authLoginDto: AuthLoginDto): Promise<any> {
@@ -37,7 +42,9 @@ export class AuthService {
         user.password,
       );
       if (!isMatch) {
-        throw new UnauthorizedException();
+        throw new UnauthorizedException(
+          'Please use a valid email and password',
+        );
       }
 
       const currentTime = new Date();
@@ -66,12 +73,20 @@ export class AuthService {
       user.otpGeneratedAt = currentTime;
       await this.userRepository.save(user);
 
+      const emailPayload: IOtpMailPayload = {
+        firstName: user.firstName,
+        otpToken: token,
+        email: user.email,
+      };
+
+      this.customMailerService.loginOtpEmail(emailPayload);
+
       return {
-        otp: 'OTP sent',
+        message: 'OTP has been sent to your mail.',
         userId: user.id,
       };
     } catch (error) {
-      throw new BadRequestException(error);
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -112,7 +127,7 @@ export class AuthService {
         otpRes: isVerified,
       };
     } catch (error) {
-      throw new BadRequestException(error);
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }
 }

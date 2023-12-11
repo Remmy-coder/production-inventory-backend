@@ -16,6 +16,8 @@ import { CurrenciesService } from 'src/currencies/currencies.service';
 import { SetCompanyCurrencyDto } from './dto/set-company-currency.dto';
 import { AbstractService } from 'src/common/abstract/abstract.service';
 import { CompanyActivationStatus } from 'src/utils/enums/company-activation-status.enum';
+import { ICompanyActivationEmailPayload } from 'src/custom-mailer/interfaces/companyActivationEmail.interface';
+import { CustomMailerService } from 'src/custom-mailer/custom-mailer.service';
 
 @Injectable()
 export class CompanyService extends AbstractService<Company> {
@@ -23,6 +25,7 @@ export class CompanyService extends AbstractService<Company> {
     @Inject(companyConstants.provide)
     private companyRepository: Repository<Company>,
     private readonly currenciesService: CurrenciesService,
+    private readonly customMailerService: CustomMailerService,
   ) {
     super(companyRepository, ['currency']);
   }
@@ -30,16 +33,30 @@ export class CompanyService extends AbstractService<Company> {
   async companyRegistration(
     createCompanyDto: CreateCompanyDto,
   ): Promise<Company> {
-    const generatedID = uuidv4();
-    const company = new Company();
-    company.id = generatedID;
-    company.name = createCompanyDto.name;
-    company.email = createCompanyDto.email;
-    company.country = createCompanyDto.country;
-    company.state = createCompanyDto.state;
-    company.address = createCompanyDto.address;
+    try {
+      const generatedID = uuidv4();
+      const company = new Company();
+      company.id = generatedID;
+      company.name = createCompanyDto.name;
+      company.email = createCompanyDto.email;
+      company.country = createCompanyDto.country;
+      company.state = createCompanyDto.state;
+      company.address = createCompanyDto.address;
 
-    return await company.save();
+      const newlyCreatedCompany = await company.save();
+
+      const emailPayload: ICompanyActivationEmailPayload = {
+        activationUrl: `http://localhost:3002/company/companyActivation/${newlyCreatedCompany.activationToken}`,
+        email: newlyCreatedCompany.email,
+      };
+
+      this.customMailerService.companyActivationEmail(emailPayload);
+
+      return newlyCreatedCompany;
+    } catch (error) {
+      //Promise.reject(error);
+      throw new HttpException(error.detail, HttpStatus.BAD_REQUEST);
+    }
   }
 
   async updateCompany(
@@ -62,7 +79,7 @@ export class CompanyService extends AbstractService<Company> {
 
       return this.companyRepository.save(entity);
     } catch (error) {
-      throw new BadRequestException(error);
+      throw new HttpException(error.detail, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -89,7 +106,7 @@ export class CompanyService extends AbstractService<Company> {
 
       return this.companyRepository.save(company);
     } catch (error) {
-      throw new BadRequestException(error);
+      throw new HttpException(error.detail, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -104,14 +121,14 @@ export class CompanyService extends AbstractService<Company> {
 
       return this.companyRepository.remove(entity);
     } catch (error) {
-      throw new BadRequestException(error);
+      throw new HttpException(error.detail, HttpStatus.BAD_REQUEST);
     }
   }
 
-  async activateCompany(id: string): Promise<Company> {
+  async activateCompany(activationToken: string): Promise<Company> {
     try {
       const company = await this.companyRepository.findOne({
-        where: { id: id },
+        where: { activationToken: activationToken },
       });
 
       if (!company) {
@@ -122,7 +139,7 @@ export class CompanyService extends AbstractService<Company> {
 
       return this.companyRepository.save(company);
     } catch (error) {
-      throw new BadRequestException(error);
+      throw new HttpException(error.detail, HttpStatus.BAD_REQUEST);
     }
   }
 }
