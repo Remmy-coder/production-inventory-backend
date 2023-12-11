@@ -49,4 +49,4 @@ jobs:
 
       - name: Update Image Tag in Deployment File
         run: |
-         ls pmsbackend-k8s-iac/dev
+         ls pmsbackend-k8s-iac
