@@ -39,3 +39,20 @@ jobs:
           tags: ${COMMIT_HASH}
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Clone other repository
+        run: git clone https://github.com/Remmy-coder/pmsbackend-k8s-iac pmsbackend-k8s-iac
+
+      - name: Update Image Tag in Deployment File
+        run: |
+          sed -i "s|remmyomeje/pms-repository:old-tag|remmyomeje/pms-repository:${COMMIT_HASH}|g" pmsbackend-k8s-iac/dev/deployment.yaml
+        working-directory: pmsbackend-k8s-iac
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.email "remmy.ro@gmail.com"
+          git config --global user.name "Remmy-coder"
+          git add dev/deployment.yaml
+          git commit -m "Update image tag to commit hash"
+          git push https://github.com/Remmy-coder/pmsbackend-k8s-iac master
+        working-directory: pmsbackend-k8s-iac
