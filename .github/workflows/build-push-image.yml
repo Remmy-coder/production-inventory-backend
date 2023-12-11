@@ -23,16 +23,19 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build the Nest.js app
         run: npm run build
+
+      - name: Get commit hash
+        run: echo "COMMIT_HASH=$GITHUB_SHA" >> $GITHUB_ENV
 
       - name: Build and Push Image to Docker Hub
         uses: mr-smithers-excellent/docker-build-push@v6
         with:
           image: remmyomeje/pms-repository
           registry: docker.io
-          tags: latest
+          tags: ${COMMIT_HASH}
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}

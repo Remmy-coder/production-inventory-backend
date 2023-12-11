@@ -10,6 +10,8 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
+import { UserVerificationStatus } from 'src/utils/enums/user-verification-status.enum';
 
 @Entity()
 export class User extends BaseEntity {
@@ -43,6 +45,15 @@ export class User extends BaseEntity {
   @ManyToOne(() => Company, (company) => company.user)
   company: Company;
 
+  @Column({
+    enum: UserVerificationStatus,
+    default: UserVerificationStatus.NOT_VERIFIED,
+  })
+  isVerified: UserVerificationStatus;
+
+  @Column({ nullable: true })
+  verificationToken: string;
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -53,5 +64,11 @@ export class User extends BaseEntity {
   async setPassword(password: string) {
     const salt = await bcrypt.genSalt();
     this.password = await bcrypt.hash(password || this.password, salt);
+  }
+
+  @BeforeInsert()
+  generateVerificationToken() {
+    // Generate a random verification token (e.g., a 16-character hex string)
+    this.verificationToken = crypto.randomBytes(8).toString('hex');
   }
 }
