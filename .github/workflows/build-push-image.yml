@@ -28,6 +28,7 @@ jobs:
       - name: Clone other repository
         uses: GuillaumeFalourd/clone-github-repo-action@v2.2
         with:
+          branch: 'master'
           owner: "Remmy-coder"
           repository: "pmsbackend-k8s-iac"
           access-token: ${{ secrets.PAT_TOKEN }}
