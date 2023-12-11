@@ -13,6 +13,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from 'src/auth/guards/auth.guard';
 import { CurrenciesProviders } from 'src/currencies/currencies.providers';
 import { CurrenciesService } from 'src/currencies/currencies.service';
+import { CustomMailerService } from 'src/custom-mailer/custom-mailer.service';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { CurrenciesService } from 'src/currencies/currencies.service';
     UserService,
     CompanyService,
     CurrenciesService,
+    CustomMailerService,
     AuthService,
     {
       provide: APP_GUARD,

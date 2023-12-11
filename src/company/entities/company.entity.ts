@@ -8,6 +8,7 @@ import { User } from 'src/user/entities/user.entity';
 import { CompanyActivationStatus } from 'src/utils/enums/company-activation-status.enum';
 import {
   BaseEntity,
+  BeforeInsert,
   Column,
   CreateDateColumn,
   Entity,
@@ -17,6 +18,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import * as crypto from 'crypto';
 
 @Entity()
 export class Company extends BaseEntity {
@@ -73,6 +75,9 @@ export class Company extends BaseEntity {
   })
   activationStatus: CompanyActivationStatus;
 
+  @Column({ nullable: true })
+  activationToken: string;
+
   @Column({ type: 'timestamp', nullable: true })
   activationDate: Date;
 
@@ -81,4 +86,10 @@ export class Company extends BaseEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @BeforeInsert()
+  generateActivationToken() {
+    // Generate a random verification token (e.g., a 16-character hex string)
+    this.activationToken = crypto.randomBytes(8).toString('hex');
+  }
 }

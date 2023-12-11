@@ -3,9 +3,12 @@ import {
   Controller,
   Get,
   HttpCode,
+  HttpException,
   HttpStatus,
   Param,
+  Patch,
   Post,
+  Put,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthLoginDto } from './dto/auth.login.dto';
@@ -30,7 +33,7 @@ export class AuthController {
   }
 
   @Public()
-  @Get('verifyOtp/:id/:otp')
+  @Patch('verifyOtp/:id/:otp')
   async verifyOtp(@Param('id') userId: string, @Param('otp') otp: string) {
     const { userData, otpRes } = await this.authService.verifyOtp(userId, otp);
 
@@ -45,7 +48,10 @@ export class AuthController {
         userData: userData,
       };
     } else {
-      return { message: 'OTP verification failed' };
+      throw new HttpException(
+        'OTP verification failed',
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 }

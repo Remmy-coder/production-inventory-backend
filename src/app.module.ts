@@ -13,16 +13,34 @@ import { SupplierModule } from './supplier/supplier.module';
 import { SupplierContactModule } from './supplier-contact/supplier-contact.module';
 import { RawMaterialModule } from './raw-material/raw-material.module';
 import { PackagingMaterialModule } from './packaging-material/packaging-material.module';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { HttpExceptionFilter } from './utils/exceptionFilters/http-exception.filter';
 import { FinishedProductModule } from './finished-product/finished-product.module';
 import { FinishedProductRawMaterialModule } from './finished-product-raw-material/finished-product-raw-material.module';
 import { FinishedProductPackagingMaterialModule } from './finished-product-packaging-material/finished-product-packaging-material.module';
 import configuration from './config/configuration';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { CustomMailerModule } from './custom-mailer/custom-mailer.module';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { TransformResponseInterceptor } from './utils/interceptors/transformResponseInterceptor';
 
 @Module({
   imports: [
     DatabaseModule,
+    MailerModule.forRoot({
+      transport: {
+        host: process.env.MAILER_HOST,
+        port: parseInt(process.env.MAILER_PORT),
+        auth: {
+          user: process.env.MAILER_USER,
+          pass: process.env.MAILER_PASS,
+        },
+      },
+      template: {
+        dir: 'dist/custom-mailer/mail-templates',
+        adapter: new HandlebarsAdapter(),
+      },
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
@@ -38,6 +56,7 @@ import configuration from './config/configuration';
     FinishedProductModule,
     FinishedProductRawMaterialModule,
     FinishedProductPackagingMaterialModule,
+    CustomMailerModule,
   ],
   controllers: [AppController],
   providers: [
@@ -47,6 +66,10 @@ import configuration from './config/configuration';
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TransformResponseInterceptor,
     },
   ],
 })

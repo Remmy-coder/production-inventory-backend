@@ -29,20 +29,10 @@ export class CompanyController {
   async create(
     @Body(SETTINGS.VALIDATION_PIPE) createCompanyDto: CreateCompanyDto,
   ) {
-    try {
-      const company = await this.companyService.companyRegistration(
-        createCompanyDto,
-      );
-      return company;
-    } catch (error) {
-      if (error.code === '23505') {
-        // PostgreSQL error code for unique constraint violation
-        throw new ConflictException(
-          'Duplicate entry. Please provide unique values.',
-        );
-      }
-      // console.log(error);
-    }
+    const company = await this.companyService.companyRegistration(
+      createCompanyDto,
+    );
+    return company;
   }
 
   @Get()
@@ -90,8 +80,9 @@ export class CompanyController {
     return await this.companyService.addCurrency(id, addCurrencyCompanyDto);
   }
 
-  @Get(':id/companyActivation')
-  async activateCompany(@Param('id') id: string) {
-    return await this.companyService.activateCompany(id);
+  @Public()
+  @Get('companyActivation/:token')
+  async activateCompany(@Param('token') token: string) {
+    return await this.companyService.activateCompany(token);
   }
 }
