@@ -14,9 +14,6 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-      - name: Create Directory
-        run: mkdir pmsbackend-k8s-iac
-
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -47,12 +44,12 @@ jobs:
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
-          git clone https://github.com/Remmy-coder/pmsbackend-k8s-iac pmsbackend-k8s-iac
+          mkdir -p pmsbackend-k8s-iac
           cd pmsbackend-k8s-iac
+          git clone https://github.com/Remmy-coder/pmsbackend-k8s-iac .
           git config --local credential.helper "store --file=.git/credentials"
           git config --local user.email "remmy.ro@gmail.com"
           git config --local user.name "Remmy-coder"
-        working-directory: ./pmsbackend-k8s-iac
 
       - name: Update Image Tag in Deployment File
         run: |
