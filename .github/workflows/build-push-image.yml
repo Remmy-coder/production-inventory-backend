@@ -24,6 +24,11 @@ jobs:
 
       - name: Get commit hash
         run: echo "COMMIT_HASH=$GITHUB_SHA" >> $GITHUB_ENV
+        
+      - name: Get previous commit SHA
+        run: |
+          PREVIOUS_COMMIT=$(git rev-parse HEAD^)
+          echo "Previous Commit SHA: $PREVIOUS_COMMIT"
 
       - name: Clone other repository
         uses: GuillaumeFalourd/clone-github-repo-action@v2.2
