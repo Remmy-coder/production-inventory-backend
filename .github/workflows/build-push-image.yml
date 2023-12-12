@@ -48,15 +48,14 @@ jobs:
           sed -i "s|remmyomeje/pms-repository:.*|remmyomeje/pms-repository:${COMMIT_HASH}|g" deployment.yaml
           cat deployment.yaml
 
-      - name: Pushes Deployment Manifest Yaml
-        uses: dmnemec/copy_file_to_another_repo_action@main
+      - name: Pushes to another repository
+        uses: cpina/github-action-push-to-another-repository@target-branch
         env:
-          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+          API_TOKEN_GITHUB: ${{ secrets.PAT_TOKEN }}
         with:
-          source_file: 'deployment.yaml'
-          destination_repo: 'pmsbackend-k8s-iac'
-          destination_folder: 'dev'
-          user_email: 'remmy.ro@gmail.com'
-          user_name: 'Remmy-coder'
-          commit_message: 'Manifest update for commit ${COMMIT_HASH}'
+          source-directory: ..
+          destination-github-username: 'Remmy-coder'
+          destination-repository-name: 'pmsbackend-k8s-iac'
+          user-email: remmy.ro@gmail.com
+          target-branch: master
 
