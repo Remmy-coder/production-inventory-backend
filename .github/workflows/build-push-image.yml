@@ -53,7 +53,7 @@ jobs:
         env:
           API_TOKEN_GITHUB: ${{ secrets.PAT_TOKEN }}
         with:
-          source-directory: ..
+          source-directory: pmsbackend-k8s-iac
           destination-github-username: 'Remmy-coder'
           destination-repository-name: 'pmsbackend-k8s-iac'
           user-email: remmy.ro@gmail.com
