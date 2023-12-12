@@ -48,10 +48,15 @@ jobs:
           sed -i "s|remmyomeje/pms-repository:.*|remmyomeje/pms-repository:${COMMIT_HASH}|g" deployment.yaml
           cat deployment.yaml
 
-      - name: Commit and Push Changes
-        run: |
-          git config --global user.email "remmy.ro@gmail.com"
-          git config --global user.name "Remmy-coder"
-          git add .
-          git commit -m "Update image tag to commit hash"
-          git push https://github.com/Remmy-coder/pmsbackend-k8s-iac master
+      - name: Pushes Deployment Manifest Yaml
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source_file: 'deployment.yaml'
+          destination_repo: 'pmsbackend-k8s-iac'
+          destination_folder: 'dev'
+          user_email: 'remmy.ro@gmail.com'
+          user_name: 'Remmy-coder'
+          commit_message: 'Manifest update for commit ${COMMIT_HASH}'
+
