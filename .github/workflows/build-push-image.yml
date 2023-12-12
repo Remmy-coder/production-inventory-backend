@@ -43,6 +43,6 @@ jobs:
         run: |
           git config --global user.email "remmy.ro@gmail.com"
           git config --global user.name "Remmy-coder"
-          git add dev/deployment.yaml
-          git commit -m "Update image tag to commit hash"
+          git add deployment.yaml
+          git commit -m "Update image tag to commit hash ${COMMIT_HASH}"
           git push https://github.com/Remmy-coder/pmsbackend-k8s-iac master
