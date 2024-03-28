@@ -14,7 +14,7 @@ import {
 } from 'typeorm';
 
 @Entity()
-@Unique(['name', 'barcode', 'company'])
+@Unique(['name', 'company'])
 export class RawMaterial extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -22,7 +22,7 @@ export class RawMaterial extends BaseEntity {
   @Column()
   name: string;
 
-  @Column()
+  @Column({ unique: true })
   barcode: string;
 
   @Column()
